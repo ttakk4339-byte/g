@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>CyberCat City: Neon Nights</title>
-<style>
-    body { margin: 0; overflow: hidden; background: #010103; font-family: 'Courier New', Courier, monospace; color: #fff; }
-    #ui_container { position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none; }
-    .ui-element { background: rgba(0, 0, 5, 0.7); border: 1px solid #0ff; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-shadow: 0 0 5px #0ff; box-shadow: 0 0 10px rgba(0,255,255,0.3); }
-    #fish { color: #0f0; font-weight: bold; font-size: 1.2em; }
-    #quest { color: #ff00ff; text-shadow: 0 0 5px #ff00ff; }
-    #instructions { position: absolute; bottom: 10px; left: 10px; color: #555; font-size: 12px; }
-</style>
+    <meta charset="UTF-8">
+    <title>CyberCat: Neon Follow</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; z-index: 10;
+            background: rgba(0, 20, 40, 0.8); padding: 15px;
+            border: 2px solid #0ff; border-radius: 10px;
+            color: #0ff; box-shadow: 0 0 15px #0ff;
+            pointer-events: none;
+        }
+        .stat { font-size: 20px; margin-bottom: 5px; }
+        #hint { font-size: 12px; color: #aaa; margin-top: 10px; }
+    </style>
 </head>
 <body>
 
-<div id="ui_container">
-    <div class="ui-element">🐱 Кибер-Кот: <span id="items">Сытость 0%</span></div>
-    <div id="quest" class="ui-element">📜 Квест: Собрать 5 энерго-рыб [ <span id="fish">0</span> / 5 ]</div>
+<div id="ui">
+    <div class="stat">🐟 Собранная энергия: <span id="fishCount">0</span> / 5</div>
+    <div id="quest">Квест: Найдите светящуюся рыбу в городе</div>
+    <div id="hint">Управление: WASD | Обзор: Мышь | Зум: Колесико</div>
 </div>
-
-<div id="instructions">Управление: WASD | Вращение камеры: Мышь (ЛКМ) | Зум: Колесико</div>
 
 <script type="importmap">
     {
@@ -37,302 +40,159 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-// --- НАСТРОЙКИ ---
-const CONFIG = {
-    townSize: 300,
-    buildingCount: 150,
-    fishTarget: 5,
-    catSpeed: 0.5
-};
-
-// --- СЦЕНА И БАЗА ---
+// --- ИНИЦИАЛИЗАЦИЯ ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x010103);
-scene.fog = new THREE.FogExp2(0x020208, 0.006); // Темно-синий туман
+scene.background = new THREE.Color(0x020205);
+scene.fog = new THREE.FogExp2(0x020208, 0.008);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 20, 30);
+camera.position.set(0, 15, 25);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ReinhardToneMapping; // Нужно для Bloom эффекта
-renderer.toneMappingExposure = 1.5;
+renderer.toneMapping = THREE.ReinhardToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// --- КОНТРОЛЛЕРЫ (ВРАЩЕНИЕ МЫШЬЮ) ---
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // Плавность вращения
-controls.dampingFactor = 0.05;
-controls.minDistance = 10;
-controls.maxDistance = 100;
-controls.maxPolarAngle = Math.PI / 2.1; // Не пускать камеру под пол
-
-// --- ПОСТ-ОБРАБОТКА (СВЕЧЕНИЕ/BLOOM) ---
+// --- ПОСТ-ОБРАБОТКА (СВЕЧЕНИЕ) ---
 const renderScene = new RenderPass(scene, camera);
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-bloomPass.threshold = 0.2; // Порог яркости для свечения
-bloomPass.strength = 1.2;    // Сила свечения
-bloomPass.radius = 0.5;      // Радиус размытия
-
+bloomPass.threshold = 0.1;
+bloomPass.strength = 1.0;
 const composer = new EffectComposer(renderer);
 composer.addPass(renderScene);
 composer.addPass(bloomPass);
 
+// --- УПРАВЛЕНИЕ КАМЕРОЙ ---
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxPolarAngle = Math.PI / 2.1; // Чтобы не смотреть под пол
+
 // --- СВЕТ ---
-const ambientLight = new THREE.AmbientLight(0x080820, 0.5);
-scene.add(ambientLight);
+scene.add(new THREE.AmbientLight(0x4040ff, 0.2));
+const cityLight = new THREE.PointLight(0x00ffff, 2, 200);
+cityLight.position.set(0, 50, 0);
+scene.add(cityLight);
 
-// Рассеянный верхний свет города
-const hemisphereLight = new THREE.HemisphereLight(0x00ffff, 0xff00ff, 0.3);
-scene.add(hemisphereLight);
-
-// --- ОБЪЕКТЫ ---
-
-// 1. ПОЛ (Металлические плиты с отражением)
-const groundGeo = new THREE.PlaneGeometry(1000, 1000, 10, 10);
-const groundMat = new THREE.MeshStandardMaterial({ 
-    color: 0x111115, 
-    metalness: 0.9, 
-    roughness: 0.3,
-    emissive: 0x010105
-});
-const ground = new THREE.Mesh(groundGeo, groundMat);
+// --- ОКРУЖЕНИЕ ---
+// Пол
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(1000, 1000), 
+    new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.5 })
+);
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-// 2. СОЗДАНИЕ НЕОНОВОГО ГОРОДА
+// Город (Здания)
 const buildings = [];
-const neonColors = [0x00ffff, 0xff00ff, 0xff0055, 0x00ff00];
-
-// Процедурная текстура окон
-function createWindowTexture() {
+const winTex = () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 64; canvas.height = 128;
+    canvas.width = 32; canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#050505'; // Фон стены
-    ctx.fillRect(0, 0, 64, 128);
-    ctx.fillStyle = '#fffee0'; // Цвет окон (тепло-белый)
-    for(let i=0; i<4; i++) {
-        for(let j=0; j<10; j++) {
-            if(Math.random() > 0.3) { // 70% окон горят
-                ctx.fillRect(8 + i*14, 8 + j*12, 8, 8);
-            }
-        }
-    }
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    return texture;
-}
-const winTex = createWindowTexture();
+    ctx.fillStyle = '#111'; ctx.fillRect(0,0,32,64);
+    ctx.fillStyle = '#0ff'; 
+    for(let i=0; i<4; i++) for(let j=0; j<8; j++) if(Math.random()>0.5) ctx.fillRect(i*8+2, j*8+2, 4, 4);
+    const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+};
 
-for (let i = 0; i < CONFIG.buildingCount; i++) {
-    const h = 20 + Math.random() * 80;
-    const w = 10 + Math.random() * 15;
-    const geo = new THREE.BoxGeometry(w, h, w);
+for (let i = 0; i < 120; i++) {
+    const h = 20 + Math.random() * 60;
+    const w = 8 + Math.random() * 12;
+    const bGeo = new THREE.BoxGeometry(w, h, w);
+    const bMat = new THREE.MeshStandardMaterial({ color: 0x0a0a15, emissiveMap: winTex(), emissive: 0x00ffff, emissiveIntensity: 0.3 });
+    const b = new THREE.Mesh(bGeo, bMat);
     
-    // Материал здания с текстурой окон
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: 0x05050a,
-        map: winTex,
-        emissive: 0xffffee,
-        emissiveMap: winTex,
-        emissiveIntensity: 0.2 // Легкое свечение окон
-    });
-    
-    const b = new THREE.Mesh(geo, mat);
-    
-    // Позиционирование в круге, избегая центра
     const angle = Math.random() * Math.PI * 2;
-    const dist = 30 + Math.random() * (CONFIG.townSize - 30);
-    b.position.x = Math.cos(angle) * dist;
-    b.position.z = Math.sin(angle) * dist;
-    b.position.y = h / 2;
+    const dist = 40 + Math.random() * 250;
+    b.position.set(Math.cos(angle)*dist, h/2, Math.sin(angle)*dist);
     
     scene.add(b);
-
-    // Добавляем случайную неоновую полосу на здание
-    if(Math.random() > 0.4) {
-        const neonColor = neonColors[Math.floor(Math.random()*neonColors.length)];
-        const neonGeo = Math.random() > 0.5 ? new THREE.BoxGeometry(0.5, h, 0.5) : new THREE.BoxGeometry(w+0.2, 0.5, w+0.2);
-        const neonMat = new THREE.MeshStandardMaterial({
-            color: neonColor,
-            emissive: neonColor,
-            emissiveIntensity: 5 // Высокая яркость для глоу
-        });
-        const neonLine = new THREE.Mesh(neonGeo, neonMat);
-        b.add(neonLine); // Привязываем к зданию
-    }
-
-    // Хитбокс для коллизий
     b.userData.box = new THREE.Box3().setFromObject(b);
     buildings.push(b);
 }
 
-// 3. КИБЕР-КОТ (Улучшенная модель из блоков)
+// --- КИБЕР-КОТ ---
 const catGroup = new THREE.Group();
-
-const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff9933, metalness: 0.6, roughness: 0.4 });
-const neonStripMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 3 });
-
-// Тело
-const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 3.5), bodyMat);
+const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 3.5), new THREE.MeshStandardMaterial({ color: 0xff8822 }));
 catGroup.add(body);
-
-// Неоновая полоса вдоль тела
-const strip = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.2, 3.6), neonStripMat);
-strip.position.y = 0.1;
-catGroup.add(strip);
-
-// Голова
-const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 1.2), bodyMat);
-head.position.set(0, 0.6, -1.8);
-catGroup.add(head);
-
-// Глаза (светятся)
-const eyeMat = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 4 });
-const eyeGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(0.4, 0.3, -2.4); catGroup.add(eyeL);
-const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(-0.4, 0.3, -2.4); catGroup.add(eyeR);
+// Глаза
+const eyeGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+const eyeMat = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 5 });
+const e1 = new THREE.Mesh(eyeGeo, eyeMat); e1.position.set(0.5, 0.4, -1.8); catGroup.add(e1);
+const e2 = new THREE.Mesh(eyeGeo, eyeMat); e2.position.set(-0.5, 0.4, -1.8); catGroup.add(e2);
 
 catGroup.position.y = 0.6;
 scene.add(catGroup);
 
-// Хитбокс кота
-const catBox = new THREE.Box3();
-
-
-// 4. ЭНЕРГО-РЫБА (Коллектабл)
+// --- РЫБА ---
 const fishItems = [];
-const fishGeo = new THREE.IcosahedronGeometry(0.7, 0); // Граненая сфера
-const fishMat = new THREE.MeshStandardMaterial({ 
-    color: 0x00ffff, 
-    emissive: 0xff00ff, // Переливается сине-розовым
-    emissiveIntensity: 4, 
-    metalness: 1, 
-    roughness: 0 
-});
+const fGeo = new THREE.IcosahedronGeometry(0.8, 0);
+const fMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 3 });
 
 function spawnFish() {
-    const f = new THREE.Mesh(fishGeo, fishMat);
-    assignRandomPos(f, 20, 100);
+    const f = new THREE.Mesh(fGeo, fMat);
+    f.position.set((Math.random()-0.5)*150, 1, (Math.random()-0.5)*150);
     scene.add(f);
-    
-    // Точечный свет от рыбы
-    const light = new THREE.PointLight(0xff00ff, 1, 10);
-    f.add(light);
-    
     fishItems.push(f);
 }
+for(let i=0; i<15; i++) spawnFish();
 
-function assignRandomPos(obj, minD, maxD) {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = minD + Math.random() * (maxD - minD);
-    obj.position.set(Math.cos(angle)*dist, 1, Math.sin(angle)*dist);
-}
-
-// Спавним 15 рыб изначально
-for (let i = 0; i < 15; i++) spawnFish();
-
-
-// --- ЛОГИКА ГЕЙМПЛЕЯ ---
-let inventory = { fish: 0 };
-let keys = { w: false, a: false, s: false, d: false };
-let isQuestDone = false;
-
-window.addEventListener("keydown", e => { if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
-window.addEventListener("keyup", e => { if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; });
-
-function updateUI() {
-    document.getElementById("fish").innerText = inventory.fish;
-    const progress = Math.min(100, (inventory.fish / CONFIG.fishTarget) * 100);
-    document.getElementById("items").innerText = `Сытость ${progress}%`;
-    
-    if (inventory.fish >= CONFIG.fishTarget && !isQuestDone) {
-        isQuestDone = true;
-        document.getElementById("quest").innerHTML = "✅ Квест выполнен! Кибер-Кот заряжен.";
-        document.getElementById("quest").style.color = "#0f0";
-        document.getElementById("quest").style.textShadow = "0 0 10px #0f0";
-    }
-}
+// --- ЛОГИКА ---
+let score = 0;
+const keys = {};
+window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
 function checkCollision(nx, nz) {
-    // Обновляем хитбокс кота в новой предполагаемой позиции
-    catBox.setFromCenterAndSize(
-        new THREE.Vector3(nx, 0.6, nz),
-        new THREE.Vector3(2, 1.2, 3.5)
-    );
-    
-    // Проверка с каждым зданием
-    for (let b of buildings) {
-        if (catBox.intersectsBox(b.userData.box)) return true;
-    }
-    return false;
+    const catBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(nx, 0.6, nz), new THREE.Vector3(2.2, 1.2, 3.7));
+    return buildings.some(b => catBox.intersectsBox(b.userData.box));
 }
-
-// --- ЦИКЛ АНИМАЦИИ ---
-const clock = new THREE.Clock();
 
 function animate() {
     requestAnimationFrame(animate);
-    const delta = clock.getDelta();
-
-    // 1. Движение кота
-    let moved = false;
-    let nextX = catGroup.position.x;
-    let nextZ = catGroup.position.z;
-    let moveDir = new THREE.Vector3();
-
-    // Определяем направление движения относительно камеры (чтобы W всегда вела "вперед")
+    
+    // Движение относительно камеры
     const camDir = new THREE.Vector3();
     camera.getWorldDirection(camDir);
-    camDir.y = 0; camDir.normalize(); // Только горизонтальная плоскость
-    const camSide = new THREE.Vector3().crossVectors(camDir, new THREE.Vector3(0,1,0)).normalize();
+    camDir.y = 0; camDir.normalize();
+    const camSide = new THREE.Vector3().crossVectors(camDir, new THREE.Vector3(0, 1, 0)).normalize();
 
-    if (keys["w"]) { moveDir.add(camDir); moved = true; }
-    if (keys["s"]) { moveDir.sub(camDir); moved = true; }
-    if (keys["a"]) { moveDir.add(camSide); moved = true; }
-    if (keys["d"]) { moveDir.sub(camSide); moved = true; }
+    let move = new THREE.Vector3(0,0,0);
+    if (keys['w']) move.add(camDir);
+    if (keys['s']) move.sub(camDir);
+    if (keys['a']) move.add(camSide);
+    if (keys['d']) move.sub(camSide);
 
-    if (moved) {
-        moveDir.normalize();
-        nextX += moveDir.x * CONFIG.catSpeed;
-        nextZ += moveDir.z * CONFIG.catSpeed;
-
+    if (move.length() > 0) {
+        move.normalize();
+        const nextX = catGroup.position.x + move.x * 0.5;
+        const nextZ = catGroup.position.z + move.z * 0.5;
+        
         if (!checkCollision(nextX, nextZ)) {
-            catGroup.position.x = nextX;
-            catGroup.position.z = nextZ;
-            
-            // Плавный поворот кота в сторону движения
-            const targetRotation = Math.atan2(moveDir.x, moveDir.z) + Math.PI;
-            catGroup.rotation.y = THREE.MathUtils.lerp(catGroup.rotation.y, targetRotation, 0.1);
+            catGroup.position.set(nextX, 0.6, nextZ);
+            const targetRot = Math.atan2(move.x, move.z) + Math.PI;
+            catGroup.rotation.y = THREE.MathUtils.lerp(catGroup.rotation.y, targetRot, 0.15);
         }
     }
 
-    // 2. Логика рыб (вращение и сбор)
-    const time = clock.getElapsedTime();
-    fishItems.forEach((f, index) => {
-        f.rotation.y += delta * 2;
-        f.position.y = 1 + Math.sin(time * 3 + index) * 0.2; // Левитация
-        
-        // Сбор рыбы (расстояние)
-        if (catGroup.position.distanceTo(f.position) < 3) {
-            inventory.fish++;
-            updateUI();
-            // Эффект сбора: телепортируем рыбу
-            assignRandomPos(f, 30, 150);
+    // Сбор рыбы
+    fishItems.forEach((f, i) => {
+        f.rotation.y += 0.05;
+        if(catGroup.position.distanceTo(f.position) < 3) {
+            score++;
+            document.getElementById('fishCount').innerText = score;
+            f.position.set((Math.random()-0.5)*200, 1, (Math.random()-0.5)*200);
+            if(score >= 5) document.getElementById('quest').innerText = "✅ Квест выполнен! Ты лучший кибер-кот.";
         }
     });
 
-    // 3. Обновление камеры и контроллеров
-    controls.target.lerp(catGroup.position, 0.1); // Камера плавно следит за котом
+    // Камера следует за котом
+    controls.target.lerp(catGroup.position, 0.1);
     controls.update();
 
-    // 4. Рендеринг (через Composer для Bloom)
     composer.render();
 }
 
-// --- РЕСАЙЗ ---
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -340,10 +200,7 @@ window.addEventListener('resize', () => {
     composer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// --- СТАРТ ---
-updateUI();
 animate();
-
 </script>
 </body>
 </html>
