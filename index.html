@@ -2,88 +2,101 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>STEVE: THE NEON PROTOCOL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STEVE_PROTOCOL_RECKONING_OS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;500&family=Orbitron:wght@900&display=swap');
         
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-        
-        /* ГЛАВНЫЙ ИНТЕРФЕЙС */
-        #ui-wrapper { position: absolute; width: 100%; height: 100%; z-index: 100; pointer-events: none; }
-        
-        #menu-screen {
-            position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, #001515 0%, #000 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto;
+        :root {
+            --neon-blue: #00ffff;
+            --neon-pink: #ff00ff;
+            --cyber-bg: #00080a;
         }
 
-        .cyber-title {
-            font-family: 'Orbitron', sans-serif; font-size: 80px; color: #0ff;
-            text-shadow: 0 0 20px #0ff, 5px 5px #f0f; margin-bottom: 20px; text-transform: uppercase;
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: var(--cyber-bg);
+            font-family: 'Fira Code', monospace;
         }
 
-        .start-btn {
-            font-family: 'Press Start 2P', cursive; padding: 25px 50px; background: none;
-            border: 4px solid #0ff; color: #0ff; cursor: pointer; transition: 0.3s;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        /* ТЕРМИНАЛ ЗАГРУЗКИ */
+        #boot-loader {
+            position: absolute; width: 100%; height: 100%; background: #000;
+            z-index: 1000; display: flex; flex-direction: column; padding: 40px;
+            color: var(--neon-blue); box-sizing: border-box;
         }
 
-        .start-btn:hover { background: #0ff; color: #000; box-shadow: 0 0 50px #0ff; transform: scale(1.1); }
+        .log-line { margin-bottom: 5px; opacity: 0; animation: fadeIn 0.1s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
 
-        /* HUD */
-        #hud { display: none; width: 100%; height: 100%; }
-        
+        /* ИНТЕРФЕЙС ИГРЫ */
+        #ui-layer {
+            position: absolute; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100; display: none;
+        }
+
         #crosshair {
-            position: absolute; top: 50%; left: 50%; width: 30px; height: 30px;
-            transform: translate(-50%, -50%); border: 2px solid rgba(0, 255, 255, 0.5); border-radius: 50%;
+            position: absolute; top: 50%; left: 50%;
+            width: 40px; height: 40px; transform: translate(-50%, -50%);
         }
-        #crosshair::after { content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: #0ff; transform: translate(-50%, -50%); }
+        .ch-line { position: absolute; background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+        .ch-h { top: 19px; width: 40px; height: 2px; }
+        .ch-v { left: 19px; width: 2px; height: 40px; }
 
-        .hotbar {
+        .status-panel {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0, 20, 25, 0.8); border: 1px solid var(--neon-blue);
+            padding: 15px; color: var(--neon-blue); width: 300px;
+        }
+
+        .health-bar {
+            width: 100%; height: 10px; border: 1px solid var(--neon-blue);
+            margin-top: 10px; position: relative;
+        }
+        #hp-fill { width: 100%; height: 100%; background: var(--neon-pink); transition: 0.3s; }
+
+        .inventory {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 15px; background: rgba(0, 20, 20, 0.8); padding: 10px;
-            border: 2px solid #0ff; border-radius: 10px; pointer-events: auto;
+            display: flex; gap: 10px;
+        }
+        .inv-slot {
+            width: 60px; height: 60px; background: rgba(0, 40, 50, 0.5);
+            border: 2px solid #045; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: white; transition: 0.2s;
+        }
+        .inv-slot.active { border-color: var(--neon-blue); background: rgba(0, 255, 255, 0.2); transform: scale(1.1); }
+
+        #damage-overlay {
+            position: absolute; width: 100%; height: 100%;
+            box-shadow: inset 0 0 0 rgba(255,0,0,0); transition: 0.1s;
         }
 
-        .slot {
-            width: 60px; height: 60px; border: 2px solid #044; display: flex;
-            align-items: center; justify-content: center; font-size: 30px; color: #0ff;
-            font-family: 'Press Start 2P'; transition: 0.2s;
-        }
-        .slot.active { border-color: #0ff; background: rgba(0, 255, 255, 0.2); transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0, 255, 255, 0.4); }
-
-        #health-container {
-            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 8px;
-        }
-        .cell { width: 30px; height: 10px; background: #044; border: 1px solid #0ff; }
-        .cell.filled { background: #f0f; box-shadow: 0 0 10px #f0f; }
-
-        #damage-flash {
-            position: absolute; width: 100%; height: 100%; background: rgba(255, 0, 100, 0);
-            pointer-events: none; z-index: 200; transition: background 0.1s;
-        }
+        canvas { display: block; }
     </style>
 </head>
 <body>
 
-<div id="damage-flash"></div>
+<div id="boot-loader"></div>
 
-<div id="ui-wrapper">
-    <div id="menu-screen">
-        <h1 class="cyber-title">STEVE PROTOCOL</h1>
-        <p style="color: #f0f; font-family: 'Press Start 2P'; margin-bottom: 40px;">v.4.0.0-STABLE</p>
-        <button class="start-btn" onclick="Game.init()">INITIALIZE</button>
+<div id="ui-layer">
+    <div id="damage-overlay"></div>
+    <div id="crosshair">
+        <div class="ch-line ch-h"></div>
+        <div class="ch-line ch-v"></div>
+    </div>
+    
+    <div class="status-panel">
+        <div>CORE_INTEGRITY: <span id="hp-val">100</span>%</div>
+        <div class="health-bar"><div id="hp-fill"></div></div>
+        <div style="margin-top: 10px; font-size: 12px; color: var(--neon-pink);">DECRYPTING_WORLD_DATA...</div>
     </div>
 
-    <div id="hud">
-        <div id="crosshair"></div>
-        <div id="health-container"></div>
-        <div id="hotbar" class="hotbar">
-            <div class="slot active" data-id="0">⚒</div>
-            <div class="slot" data-id="1">⚔</div>
-            <div class="slot" data-id="2">🏹</div>
-            <div class="slot" data-id="3">💊</div>
-        </div>
+    <div class="inventory">
+        <div class="inv-slot active" id="slot-0">⚔</div>
+        <div class="inv-slot" id="slot-1">⚒</div>
+        <div class="inv-slot" id="slot-2">🏹</div>
+        <div class="inv-slot" id="slot-3">📦</div>
+        <div class="inv-slot" id="slot-4">💾</div>
     </div>
 </div>
 
@@ -101,151 +114,148 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 /**
- * ENGINE CORE
+ * ============================================================================
+ * ENGINE CONFIGURATION & CONSTANTS
+ * ============================================================================
  */
-const Game = {
-    // Состояние
-    params: {
-        hp: 10,
-        maxHp: 10,
-        isSprinting: false,
-        currentSlot: 0,
-        enemiesKilled: 0
+const CONFIG = {
+    PLAYER: {
+        HEIGHT: 1.8,
+        WALK_SPEED: 0.15,
+        SPRINT_SPEED: 0.32,
+        JUMP_FORCE: 0.15,
+        EYE_LEVEL: 1.7,
+        INTERACT_DIST: 5
     },
-    
-    // Системные переменные
-    clock: new THREE.Clock(),
-    scene: new THREE.Scene(),
-    camera: new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 2000),
-    renderer: new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" }),
-    controls: null,
-    
-    // Группы объектов
-    entities: {
-        enemies: [],
-        particles: [],
-        buildings: [],
-        items: []
+    WORLD: {
+        SIZE: 1500,
+        BUILDING_COUNT: 120,
+        GRID_COLOR: 0x00ffff,
+        FOG_DENSITY: 0.025
     },
-    
-    // Анимационные контроллеры
-    anims: {
-        weaponSwayX: 0,
-        weaponSwayY: 0,
-        bobStep: 0,
-        attackT: 0,
-        switchT: 1
-    },
+    AI: {
+        ENEMY_COUNT: 30,
+        DETECTION_RANGE: 40,
+        ATTACK_RANGE: 2.5,
+        MOVE_SPEED: 0.08
+    }
+};
 
-    /** ИНИЦИАЛИЗАЦИЯ */
-    init() {
-        this.setupRenderer();
-        this.setupScene();
-        this.setupLights();
-        this.setupPlayer();
-        this.generateWorld();
-        this.setupHUD();
-        this.bindEvents();
+/**
+ * ============================================================================
+ * CORE ENGINE CLASS
+ * ============================================================================
+ */
+class CyberEngine {
+    constructor() {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 2500);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        this.clock = new THREE.Clock();
+        this.controls = null;
         
-        document.getElementById('menu-screen').style.display = 'none';
-        document.getElementById('hud').style.display = 'block';
-        this.controls.lock();
+        this.entities = {
+            enemies: [],
+            vfx: [],
+            buildings: []
+        };
         
-        this.loop();
-    },
-
-    setupRenderer() {
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.toneMapping = THREE.ReinhardToneMapping;
-        document.body.appendChild(this.renderer.domElement);
-    },
-
-    setupScene() {
-        this.scene.background = new THREE.Color(0x000205);
-        this.scene.fog = new THREE.FogExp2(0x000205, 0.025);
-        
-        // Floor
-        const groundGeo = new THREE.PlaneGeometry(2000, 2000);
-        const groundMat = new THREE.MeshStandardMaterial({ 
-            color: 0x050505, 
-            metalness: 0.8, 
-            roughness: 0.2 
-        });
-        const ground = new THREE.Mesh(groundGeo, groundMat);
-        ground.rotation.x = -Math.PI / 2;
-        this.scene.add(ground);
-
-        const grid = new THREE.GridHelper(2000, 80, 0x00ffff, 0x002222);
-        this.scene.add(grid);
-    },
-
-    setupLights() {
-        const ambient = new THREE.AmbientLight(0x4040ff, 0.3);
-        this.scene.add(ambient);
-
-        this.playerLight = new THREE.PointLight(0x00ffff, 2, 20);
-        this.camera.add(this.playerLight);
-        this.scene.add(this.camera);
-    },
-
-    setupPlayer() {
-        this.controls = new PointerLockControls(this.camera, document.body);
-        this.camera.position.set(0, 1.8, 0);
-
-        // Hand Container
-        this.handRoot = new THREE.Group();
-        this.camera.add(this.handRoot);
-
-        this.createWeaponModels();
-    },
-
-    /** ОРУЖИЕ И ПРЕДМЕТЫ */
-    createWeaponModels() {
-        const createPixelTex = (c1, c2) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 8; canvas.height = 8;
-            const ctx = canvas.getContext('2d');
-            for(let i=0; i<8; i++) for(let j=0; j<8; j++) {
-                ctx.fillStyle = Math.random() > 0.5 ? c1 : c2;
-                ctx.fillRect(i, j, 1, 1);
-            }
-            const t = new THREE.CanvasTexture(canvas);
-            t.magFilter = THREE.NearestFilter;
-            return t;
+        this.player = {
+            hp: 100,
+            isDead: false,
+            velocity: new THREE.Vector3(),
+            onGround: true,
+            currentSlot: 0
         };
 
-        const metalMat = new THREE.MeshStandardMaterial({ map: createPixelTex('#777','#0ff'), emissive: 0x00ffff, emissiveIntensity: 0.2 });
-        const woodMat = new THREE.MeshStandardMaterial({ map: createPixelTex('#5d2e0d','#8b4513') });
+        this.input = { keys: {}, mouse: new THREE.Vector2() };
+        this.handRoot = new THREE.Group();
+        this.weapons = [];
+    }
 
-        // 1. Кирка
-        const pickaxe = new THREE.Group();
-        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.1), woodMat);
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.15, 0.2), metalMat);
-        head.position.y = 0.45; pickaxe.add(handle, head);
+    async boot() {
+        await this.showLoadingSequence();
+        this.initGraphics();
+        this.initPhysics();
+        this.initWorld();
+        this.initPlayer();
+        this.initAI();
+        this.bindEvents();
         
-        // 2. Меч
-        const sword = new THREE.Group();
-        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.05), metalMat);
-        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.15), metalMat);
-        blade.position.y = 0.5; sword.add(blade, guard);
+        document.getElementById('ui-layer').style.display = 'block';
+        this.loop();
+    }
 
-        this.weaponItems = [pickaxe, sword];
-        this.weaponItems.forEach(w => {
-            w.position.set(0.6, -0.5, -1);
-            w.rotation.x = Math.PI/4;
-            w.visible = false;
-            this.handRoot.add(w);
+    async showLoadingSequence() {
+        const loader = document.getElementById('boot-loader');
+        const logs = [
+            "INITIALIZING NEURAL LINK...",
+            "LOADING ASSETS: STEVE_CORE_MODEL_v4",
+            "GENERATING PROCEDURAL CITYSCAPE...",
+            "ENCRYPTING VOXEL DATA...",
+            "ESTABLISHING POINTER LOCK...",
+            "READY FOR SYNC."
+        ];
+
+        for (const log of logs) {
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerText = `> ${log}`;
+            loader.appendChild(line);
+            await new Promise(r => setTimeout(r, 400));
+        }
+
+        return new Promise(r => {
+            const btn = document.createElement('button');
+            btn.innerText = "START_SESSION";
+            btn.style = "margin-top: 20px; padding: 15px; border: 2px solid #0ff; background: none; color: #0ff; cursor: pointer; font-family: 'Orbitron';";
+            btn.onclick = () => {
+                loader.style.display = 'none';
+                this.controls.lock();
+                r();
+            };
+            loader.appendChild(btn);
         });
-        
-        this.weaponItems[0].visible = true;
-    },
+    }
 
-    /** МИР И ВРАГИ */
-    generateWorld() {
-        for(let i=0; i<100; i++) {
-            const h = 20 + Math.random() * 100;
-            const w = 10 + Math.random() * 10;
+    initGraphics() {
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.body.appendChild(this.renderer.domElement);
+
+        this.scene.background = new THREE.Color(0x000508);
+        this.scene.fog = new THREE.FogExp2(0x000508, CONFIG.WORLD.FOG_DENSITY);
+
+        const amb = new THREE.AmbientLight(0x4040ff, 0.2);
+        this.scene.add(amb);
+
+        this.spotlight = new THREE.PointLight(0x00ffff, 2.5, 30);
+        this.camera.add(this.spotlight);
+        this.scene.add(this.camera);
+    }
+
+    initPhysics() {
+        // Simple Raycast floor check
+        this.raycaster = new THREE.Raycaster();
+    }
+
+    initWorld() {
+        // Floor
+        const plane = new THREE.Mesh(
+            new THREE.PlaneGeometry(3000, 3000),
+            new THREE.MeshStandardMaterial({ color: 0x020202, metalness: 0.9, roughness: 0.1 })
+        );
+        plane.rotation.x = -Math.PI / 2;
+        this.scene.add(plane);
+
+        const grid = new THREE.GridHelper(3000, 150, 0x00ffff, 0x001122);
+        this.scene.add(grid);
+
+        // Buildings
+        for(let i=0; i < CONFIG.WORLD.BUILDING_COUNT; i++) {
+            const h = 20 + Math.random() * 150;
+            const w = 15 + Math.random() * 20;
             const geo = new THREE.BoxGeometry(w, h, w);
             const mat = new THREE.MeshStandardMaterial({ 
                 color: 0x000000, 
@@ -253,292 +263,232 @@ const Game = {
                 emissiveIntensity: Math.random() * 0.2 
             });
             const b = new THREE.Mesh(geo, mat);
-            b.position.set((Math.random()-0.5)*600, h/2, (Math.random()-0.5)*600);
+            b.position.set(
+                (Math.random()-0.5) * 1000,
+                h/2,
+                (Math.random()-0.5) * 1000
+            );
             this.scene.add(b);
-            this.entities.buildings.push(new THREE.Box3().setFromObject(b));
+            this.entities.buildings.push(b);
         }
-        
-        for(let i=0; i<20; i++) this.spawnAlex();
-    },
+    }
 
-    spawnAlex() {
-        const alex = new THREE.Group();
-        const mat = new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.1 });
-        const skin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+    initPlayer() {
+        this.controls = new PointerLockControls(this.camera, document.body);
+        this.camera.position.set(0, CONFIG.PLAYER.HEIGHT, 0);
+
+        // Hand Model
+        this.handRoot.position.set(0.5, -0.4, -0.6);
+        this.camera.add(this.handRoot);
+
+        // Weapon - Sword
+        const sword = new THREE.Group();
+        const blade = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 1.4, 0.05),
+            new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 2 })
+        );
+        blade.position.y = 0.7;
+        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.15), new THREE.MeshStandardMaterial({color: 0x222222}));
+        sword.add(blade, guard);
+        sword.rotation.x = Math.PI / 3;
+        
+        this.weapons.push(sword);
+        this.handRoot.add(sword);
+    }
+
+    initAI() {
+        for(let i=0; i<CONFIG.AI.ENEMY_COUNT; i++) {
+            this.spawnEnemy();
+        }
+    }
+
+    spawnEnemy() {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.2 });
         
         const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.4), mat);
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skin);
-        head.position.y = 1;
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+        head.position.y = 1.0;
         
-        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00ffff}));
-        eyeL.position.set(0.15, 1.1, 0.25);
-        const eyeR = eyeL.clone(); eyeR.position.x = -0.15;
+        group.add(body, head);
         
-        alex.add(body, head, eyeL, eyeR);
-        
-        // Random Pos
         const angle = Math.random() * Math.PI * 2;
-        const dist = 50 + Math.random() * 100;
-        alex.position.set(Math.cos(angle)*dist, 1.1, Math.sin(angle)*dist);
+        const radius = 100 + Math.random() * 200;
+        group.position.set(Math.cos(angle)*radius, 0.7, Math.sin(angle)*radius);
         
-        this.scene.add(alex);
+        this.scene.add(group);
         this.entities.enemies.push({
-            mesh: alex,
-            hp: 6,
-            state: 'IDLE',
-            lastAttack: 0
+            mesh: group,
+            hp: 10,
+            lastAttack: 0,
+            velocity: new THREE.Vector3()
         });
-    },
+    }
 
-    /** ИГРОВАЯ ЛОГИКА */
     bindEvents() {
-        const keys = {};
-        window.onkeydown = (e) => {
-            keys[e.code] = true;
-            if(e.code.startsWith('Digit')) {
-                const slot = parseInt(e.key) - 1;
-                if(slot >= 0 && slot < 4) this.switchSlot(slot);
-            }
-        };
-        window.onkeyup = (e) => keys[e.code] = false;
-        window.onmousedown = () => { if(this.controls.isLocked) this.attack(); };
-        
-        this.input = keys;
-        
-        window.onresize = () => {
+        window.addEventListener('keydown', (e) => this.input.keys[e.code] = true);
+        window.addEventListener('keyup', (e) => this.input.keys[e.code] = false);
+        window.addEventListener('mousedown', () => this.onAction());
+        window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
-        };
-    },
+        });
+    }
 
-    switchSlot(id) {
-        if(this.params.currentSlot === id) return;
-        this.params.currentSlot = id;
-        this.anims.switchT = 0; // Trigger anim
-        
-        const slots = document.querySelectorAll('.slot');
-        slots.forEach(s => s.classList.remove('active'));
-        slots[id].classList.add('active');
-        
-        setTimeout(() => {
-            this.weaponItems.forEach((w, i) => w.visible = (i === id));
-        }, 150);
-    },
+    onAction() {
+        if(!this.controls.isLocked || this.player.isDead) return;
 
-    attack() {
-        if(this.anims.attackT > 0) return;
-        this.anims.attackT = 1.0;
-        
-        // Raycast
-        const ray = new THREE.Raycaster();
-        ray.setFromCamera({x:0, y:0}, this.camera);
-        const hits = ray.intersectObjects(this.scene.children, true);
-        
+        // Attack Animation
+        this.handRoot.rotation.x -= 1.5;
+        setTimeout(() => this.handRoot.rotation.x += 1.5, 150);
+
+        // Raycasting for damage
+        this.raycaster.setFromCamera({x:0, y:0}, this.camera);
+        const hits = this.raycaster.intersectObjects(this.scene.children, true);
+
         for(let hit of hits) {
             let root = hit.object;
             while(root.parent && root.parent !== this.scene) root = root.parent;
             
             const enemy = this.entities.enemies.find(e => e.mesh === root);
-            if(enemy && hit.distance < 4) {
-                enemy.hp -= 2;
-                this.createBlood(hit.point);
-                
-                // Knockback
-                const dir = root.position.clone().sub(this.camera.position).normalize();
-                root.position.add(dir.multiplyScalar(2));
-                
-                if(enemy.hp <= 0) {
-                    this.scene.remove(root);
-                    this.entities.enemies = this.entities.enemies.filter(e => e !== enemy);
-                    this.params.enemiesKilled++;
-                    setTimeout(() => this.spawnAlex(), 3000);
-                }
+            if(enemy && hit.distance < CONFIG.PLAYER.INTERACT_DIST) {
+                this.damageEnemy(enemy, hit.point);
                 break;
             }
         }
-    },
+    }
 
-    createBlood(pos) {
+    damageEnemy(enemy, point) {
+        enemy.hp -= 2;
+        this.createVFX(point, 0x00ffff);
+        
+        // Push back
+        const dir = enemy.mesh.position.clone().sub(this.camera.position).normalize();
+        enemy.mesh.position.add(dir.multiplyScalar(2));
+
+        if(enemy.hp <= 0) {
+            this.scene.remove(enemy.mesh);
+            this.entities.enemies = this.entities.enemies.filter(e => e !== enemy);
+            setTimeout(() => this.spawnEnemy(), 5000);
+        }
+    }
+
+    createVFX(pos, color) {
         for(let i=0; i<15; i++) {
             const p = new THREE.Mesh(
-                new THREE.BoxGeometry(0.1, 0.1, 0.1),
-                new THREE.MeshBasicMaterial({ color: 0x00ffff })
+                new THREE.BoxGeometry(0.15, 0.15, 0.15),
+                new THREE.MeshBasicMaterial({ color: color })
             );
             p.position.copy(pos);
             const vel = new THREE.Vector3(
-                (Math.random()-0.5)*0.3,
-                Math.random()*0.3,
-                (Math.random()-0.5)*0.3
+                (Math.random()-0.5)*0.4,
+                Math.random()*0.4,
+                (Math.random()-0.5)*0.4
             );
             this.scene.add(p);
-            this.entities.particles.push({ mesh: p, vel, life: 1.0 });
+            this.entities.vfx.push({ mesh: p, vel, life: 1.0 });
         }
-    },
+    }
 
-    takeDamage() {
-        this.params.hp -= 1;
-        document.getElementById('damage-flash').style.background = 'rgba(255, 0, 100, 0.4)';
-        setTimeout(() => {
-            document.getElementById('damage-flash').style.background = 'rgba(255, 0, 100, 0)';
-        }, 100);
-        this.updateHUD();
-        if(this.params.hp <= 0) location.reload();
-    },
+    updatePlayer(delta) {
+        if(!this.controls.isLocked) return;
 
-    setupHUD() {
-        const container = document.getElementById('health-container');
-        container.innerHTML = '';
-        for(let i=0; i<this.params.maxHp; i++) {
-            const d = document.createElement('div');
-            d.className = 'cell filled';
-            container.appendChild(d);
-        }
-    },
-
-    updateHUD() {
-        const cells = document.querySelectorAll('.cell');
-        cells.forEach((c, i) => {
-            c.className = i < this.params.hp ? 'cell filled' : 'cell';
-        });
-    },
-
-    /** CORE LOOP */
-    loop() {
-        requestAnimationFrame(() => this.loop());
-        const delta = this.clock.getDelta();
-        const time = this.clock.getElapsedTime();
-        
-        if(this.controls.isLocked) {
-            this.updateMovement(delta);
-            this.updateAnimations(delta, time);
-            this.updateAI(delta);
-            this.updateParticles();
-        }
-        
-        this.renderer.render(this.scene, this.camera);
-    },
-
-    updateMovement(delta) {
-        const speed = this.input['ShiftLeft'] ? 0.35 : 0.18;
+        const speed = this.input.keys['ShiftLeft'] ? CONFIG.PLAYER.SPRINT_SPEED : CONFIG.PLAYER.WALK_SPEED;
         const move = new THREE.Vector3();
-        
-        if(this.input['KeyW']) move.z -= 1;
-        if(this.input['KeyS']) move.z += 1;
-        if(this.input['KeyA']) move.x -= 1;
-        if(this.input['KeyD']) move.x += 1;
-        
-        move.normalize();
-        this.controls.moveRight(move.x * speed);
-        this.controls.moveForward(-move.z * speed);
-        
-        // Ground Lock System (No falling)
-        const targetHeight = 1.8;
-        if(this.camera.position.y !== targetHeight) {
-            this.camera.position.y = targetHeight;
-        }
 
-        // World Bounds
-        if(this.camera.position.x > 900) this.camera.position.x = 900;
-        if(this.camera.position.x < -900) this.camera.position.x = -900;
-        if(this.camera.position.z > 900) this.camera.position.z = 900;
-        if(this.camera.position.z < -900) this.camera.position.z = -900;
-    },
+        if(this.input.keys['KeyW']) move.z -= 1;
+        if(this.input.keys['KeyS']) move.z += 1;
+        if(this.input.keys['KeyA']) move.x -= 1;
+        if(this.input.keys['KeyD']) move.x += 1;
 
-    updateAnimations(delta, time) {
-        // 1. Weapon Sway (Mouse Delay)
-        // В Three.js PointerLock не дает напрямую смещение, используем интерполяцию
-        this.handRoot.position.x = THREE.MathUtils.lerp(this.handRoot.position.x, 0, 0.1);
-        this.handRoot.position.y = THREE.MathUtils.lerp(this.handRoot.position.y, 0, 0.1);
+        move.normalize().multiplyScalar(speed);
+        this.controls.moveRight(move.x);
+        this.controls.moveForward(-move.z);
 
-        // 2. View Bobbing
-        const isMoving = this.input['KeyW'] || this.input['KeyS'] || this.input['KeyA'] || this.input['KeyD'];
-        if(isMoving) {
-            this.anims.bobStep += delta * (this.input['ShiftLeft'] ? 15 : 10);
-            const bobY = Math.abs(Math.sin(this.anims.bobStep)) * 0.08;
-            const bobX = Math.cos(this.anims.bobStep * 0.5) * 0.04;
-            this.handRoot.position.y = bobY - 0.1;
-            this.handRoot.position.x = bobX;
-            
-            // Camera Tilt
-            this.camera.rotation.z = THREE.MathUtils.lerp(this.camera.rotation.z, Math.cos(this.anims.bobStep * 0.5) * 0.02, 0.1);
+        // Height Fix (Ground Lock)
+        this.camera.position.y = CONFIG.PLAYER.HEIGHT;
+
+        // Weapon Bobbing & Sway
+        const time = Date.now() * 0.005;
+        if(move.length() > 0) {
+            this.handRoot.position.y = -0.4 + Math.sin(time * 2) * 0.05;
+            this.handRoot.position.x = 0.5 + Math.cos(time) * 0.02;
+            this.camera.rotation.z = Math.sin(time) * 0.01;
         } else {
-            this.handRoot.position.y = THREE.MathUtils.lerp(this.handRoot.position.y, Math.sin(time * 2) * 0.02, 0.05);
+            this.handRoot.position.y = THREE.MathUtils.lerp(this.handRoot.position.y, -0.4, 0.1);
             this.camera.rotation.z = THREE.MathUtils.lerp(this.camera.rotation.z, 0, 0.1);
         }
-
-        // 3. Attack Animation
-        if(this.anims.attackT > 0) {
-            this.anims.attackT -= delta * 6;
-            this.handRoot.rotation.x = Math.sin(this.anims.attackT * Math.PI) * 1.5;
-            this.handRoot.rotation.z = Math.sin(this.anims.attackT * Math.PI) * 0.5;
-            this.handRoot.position.z = -Math.sin(this.anims.attackT * Math.PI) * 0.5;
-        } else {
-            this.handRoot.rotation.x = THREE.MathUtils.lerp(this.handRoot.rotation.x, 0, 0.1);
-            this.handRoot.rotation.z = THREE.MathUtils.lerp(this.handRoot.rotation.z, 0, 0.1);
-            this.handRoot.position.z = THREE.MathUtils.lerp(this.handRoot.position.z, 0, 0.1);
-        }
-
-        // 4. Switch Slot Anim
-        if(this.anims.switchT < 1.0) {
-            this.anims.switchT += delta * 5;
-            const offset = Math.sin(this.anims.switchT * Math.PI) * -0.8;
-            this.handRoot.position.y += offset;
-        }
-    },
+    }
 
     updateAI(delta) {
-        const playerPos = this.camera.position;
-        
         this.entities.enemies.forEach(enemy => {
-            const dist = enemy.mesh.position.distanceTo(playerPos);
-            
-            // Visual hit feedback
-            const isHit = (Date.now() - enemy.lastHit < 100);
-            enemy.mesh.traverse(m => {
-                if(m.isMesh && m.material.emissive) {
-                    m.material.emissiveIntensity = isHit ? 5 : 0.2;
-                }
-            });
+            const dist = enemy.mesh.position.distanceTo(this.camera.position);
 
-            if(dist < 40) {
-                // Look at player
-                enemy.mesh.lookAt(playerPos.x, enemy.mesh.position.y, playerPos.z);
+            if(dist < CONFIG.AI.DETECTION_RANGE) {
+                enemy.mesh.lookAt(this.camera.position.x, 0.7, this.camera.position.z);
                 
-                // Move logic
-                if(dist > 1.8) {
-                    const dir = playerPos.clone().sub(enemy.mesh.position).normalize();
-                    enemy.mesh.position.x += dir.x * 0.07;
-                    enemy.mesh.position.z += dir.z * 0.07;
+                if(dist > CONFIG.AI.ATTACK_RANGE) {
+                    const dir = this.camera.position.clone().sub(enemy.mesh.position).normalize();
+                    enemy.mesh.position.add(dir.multiplyScalar(CONFIG.AI.MOVE_SPEED));
                 } else {
-                    // Attack Player
-                    if(Date.now() - enemy.lastAttack > 1500) {
-                        this.takeDamage();
+                    // Attack player
+                    if(Date.now() - enemy.lastAttack > 2000) {
+                        this.damagePlayer(10);
                         enemy.lastAttack = Date.now();
                     }
                 }
             }
         });
-    },
+    }
 
-    updateParticles() {
-        for(let i = this.entities.particles.length-1; i >= 0; i--) {
-            const p = this.entities.particles[i];
-            p.mesh.position.add(p.vel);
-            p.vel.y -= 0.01; // Gravity
-            p.life -= 0.02;
-            p.mesh.scale.setScalar(p.life);
-            
-            if(p.life <= 0) {
-                this.scene.remove(p.mesh);
-                this.entities.particles.splice(i, 1);
+    damagePlayer(amount) {
+        this.player.hp -= amount;
+        const overlay = document.getElementById('damage-overlay');
+        overlay.style.boxShadow = "inset 0 0 100px rgba(255,0,0,1)";
+        setTimeout(() => overlay.style.boxShadow = "inset 0 0 0 rgba(255,0,0,0)", 150);
+        
+        document.getElementById('hp-val').innerText = this.player.hp;
+        document.getElementById('hp-fill').style.width = this.player.hp + "%";
+
+        if(this.player.hp <= 0 && !this.player.isDead) {
+            this.player.isDead = true;
+            alert("SYSTEM_CRITICAL_ERROR: STEVE_DELETED");
+            location.reload();
+        }
+    }
+
+    updateVFX() {
+        for(let i = this.entities.vfx.length - 1; i >= 0; i--) {
+            const v = this.entities.vfx[i];
+            v.mesh.position.add(v.vel);
+            v.vel.y -= 0.015; // Gravity
+            v.life -= 0.02;
+            v.mesh.scale.setScalar(v.life);
+
+            if(v.life <= 0) {
+                this.scene.remove(v.mesh);
+                this.entities.vfx.splice(i, 1);
             }
         }
     }
-};
 
-// Global Exposure for button
-window.Game = Game;
+    loop() {
+        requestAnimationFrame(() => this.loop());
+        const delta = this.clock.getDelta();
+
+        this.updatePlayer(delta);
+        this.updateAI(delta);
+        this.updateVFX();
+
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+// Start Engine
+const Engine = new CyberEngine();
+Engine.boot();
+
 </script>
 </body>
 </html>
