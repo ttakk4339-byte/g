@@ -2,34 +2,88 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>CYBER STEVE: PHYSICAL REVOLUTION</title>
+    <title>STEVE: THE NEON PROTOCOL</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Press Start 2P', cursive; }
-        #overlay { position: absolute; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; color: #0ff; }
-        .btn { padding: 20px 40px; border: 4px solid #0ff; background: none; color: #0ff; cursor: pointer; font-family: inherit; font-size: 20px; transition: 0.3s; }
-        .btn:hover { background: #0ff; color: #000; box-shadow: 0 0 20px #0ff; }
-        #hud { position: absolute; width: 100%; height: 100%; pointer-events: none; display: none; }
-        #hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; background: rgba(0,255,255,0.15); border: 2px solid #0ff; padding: 5px; backdrop-filter: blur(5px); }
-        .slot { width: 50px; height: 50px; border: 2px solid #333; margin: 0 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; }
-        .slot.active { border-color: #0ff; background: rgba(0,255,255,0.3); box-shadow: 0 0 10px #0ff; }
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 15px; height: 15px; border: 2px solid #fff; border-radius: 50%; mix-blend-mode: difference; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&display=swap');
+        
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        
+        /* ГЛАВНЫЙ ИНТЕРФЕЙС */
+        #ui-wrapper { position: absolute; width: 100%; height: 100%; z-index: 100; pointer-events: none; }
+        
+        #menu-screen {
+            position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, #001515 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto;
+        }
+
+        .cyber-title {
+            font-family: 'Orbitron', sans-serif; font-size: 80px; color: #0ff;
+            text-shadow: 0 0 20px #0ff, 5px 5px #f0f; margin-bottom: 20px; text-transform: uppercase;
+        }
+
+        .start-btn {
+            font-family: 'Press Start 2P', cursive; padding: 25px 50px; background: none;
+            border: 4px solid #0ff; color: #0ff; cursor: pointer; transition: 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        }
+
+        .start-btn:hover { background: #0ff; color: #000; box-shadow: 0 0 50px #0ff; transform: scale(1.1); }
+
+        /* HUD */
+        #hud { display: none; width: 100%; height: 100%; }
+        
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 30px; height: 30px;
+            transform: translate(-50%, -50%); border: 2px solid rgba(0, 255, 255, 0.5); border-radius: 50%;
+        }
+        #crosshair::after { content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: #0ff; transform: translate(-50%, -50%); }
+
+        .hotbar {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; background: rgba(0, 20, 20, 0.8); padding: 10px;
+            border: 2px solid #0ff; border-radius: 10px; pointer-events: auto;
+        }
+
+        .slot {
+            width: 60px; height: 60px; border: 2px solid #044; display: flex;
+            align-items: center; justify-content: center; font-size: 30px; color: #0ff;
+            font-family: 'Press Start 2P'; transition: 0.2s;
+        }
+        .slot.active { border-color: #0ff; background: rgba(0, 255, 255, 0.2); transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0, 255, 255, 0.4); }
+
+        #health-container {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px;
+        }
+        .cell { width: 30px; height: 10px; background: #044; border: 1px solid #0ff; }
+        .cell.filled { background: #f0f; box-shadow: 0 0 10px #f0f; }
+
+        #damage-flash {
+            position: absolute; width: 100%; height: 100%; background: rgba(255, 0, 100, 0);
+            pointer-events: none; z-index: 200; transition: background 0.1s;
+        }
     </style>
 </head>
 <body>
 
-<div id="overlay">
-    <h1 style="margin-bottom: 50px; text-shadow: 0 0 15px #0ff;">SYSTEM LOADING...</h1>
-    <button class="btn" onclick="init()">BOOT STEVE.EXE</button>
-</div>
+<div id="damage-flash"></div>
 
-<div id="hud">
-    <div id="crosshair"></div>
-    <div id="hotbar">
-        <div class="slot active" id="s0">⚒</div>
-        <div class="slot" id="s1">⚔</div>
-        <div class="slot" id="s2">🔌</div>
-        <div class="slot" id="s3">📦</div>
+<div id="ui-wrapper">
+    <div id="menu-screen">
+        <h1 class="cyber-title">STEVE PROTOCOL</h1>
+        <p style="color: #f0f; font-family: 'Press Start 2P'; margin-bottom: 40px;">v.4.0.0-STABLE</p>
+        <button class="start-btn" onclick="Game.init()">INITIALIZE</button>
+    </div>
+
+    <div id="hud">
+        <div id="crosshair"></div>
+        <div id="health-container"></div>
+        <div id="hotbar" class="hotbar">
+            <div class="slot active" data-id="0">⚒</div>
+            <div class="slot" data-id="1">⚔</div>
+            <div class="slot" data-id="2">🏹</div>
+            <div class="slot" data-id="3">💊</div>
+        </div>
     </div>
 </div>
 
@@ -46,187 +100,445 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-let scene, camera, renderer, controls, clock;
-let hand, currentItem, enemies = [];
-let keys = {};
-let mouseMovement = { x: 0, y: 0 };
-const GRAVITY = 0.5;
-let playerVelocity = new THREE.Vector3();
-
-// Текстуры
-const texLoader = new THREE.TextureLoader();
-const pixelTex = (c1, c2) => {
-    const canv = document.createElement('canvas'); canv.width = 8; canv.height = 8;
-    const ctx = canv.getContext('2d');
-    for(let i=0; i<8; i++) for(let j=0; j<8; j++) {
-        ctx.fillStyle = Math.random() > 0.5 ? c1 : c2;
-        ctx.fillRect(i, j, 1, 1);
-    }
-    const t = new THREE.CanvasTexture(canv); t.magFilter = THREE.NearestFilter; return t;
-};
-
-const skinTex = pixelTex('#ffdbac', '#e0ac69');
-const steveTex = pixelTex('#00cccc', '#008888');
-
-window.init = () => {
-    setup();
-    animate();
-    controls.lock();
-};
-
-function setup() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x00050a);
-    scene.fog = new THREE.FogExp2(0x00050a, 0.03);
-
-    camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    controls = new PointerLockControls(camera, document.body);
-    clock = new THREE.Clock();
-
-    controls.addEventListener('lock', () => {
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('hud').style.display = 'block';
-    });
-
-    // Свет
-    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-    const pLight = new THREE.PointLight(0x00ffff, 2, 25);
-    camera.add(pLight);
-    scene.add(camera);
-
-    // Пол (Бесконечный)
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, metalness: 0.5 }));
-    ground.rotation.x = -Math.PI/2;
-    scene.add(ground);
-
-    // Сетка
-    const grid = new THREE.GridHelper(2000, 100, 0x00ffff, 0x111122);
-    scene.add(grid);
-
-    // Рука
-    hand = new THREE.Group();
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), new THREE.MeshStandardMaterial({map: steveTex}));
-    arm.position.set(0.6, -0.5, -0.6);
-    hand.add(arm);
-    camera.add(hand);
-
-    // Инструмент
-    currentItem = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.15), new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ffff}));
-    currentItem.position.set(0.6, -0.2, -1.1);
-    currentItem.rotation.x = Math.PI/4;
-    hand.add(currentItem);
-
-    for(let i=0; i<15; i++) spawnAlex();
+/**
+ * ENGINE CORE
+ */
+const Game = {
+    // Состояние
+    params: {
+        hp: 10,
+        maxHp: 10,
+        isSprinting: false,
+        currentSlot: 0,
+        enemiesKilled: 0
+    },
     
-    // Слежка за мышью для Sway
-    document.addEventListener('mousemove', (e) => {
-        mouseMovement.x = e.movementX;
-        mouseMovement.y = e.movementY;
-    });
-}
+    // Системные переменные
+    clock: new THREE.Clock(),
+    scene: new THREE.Scene(),
+    camera: new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 2000),
+    renderer: new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" }),
+    controls: null,
+    
+    // Группы объектов
+    entities: {
+        enemies: [],
+        particles: [],
+        buildings: [],
+        items: []
+    },
+    
+    // Анимационные контроллеры
+    anims: {
+        weaponSwayX: 0,
+        weaponSwayY: 0,
+        bobStep: 0,
+        attackT: 0,
+        switchT: 1
+    },
 
-function spawnAlex() {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.4), new THREE.MeshStandardMaterial({color: 0xff00ff}));
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({map: skinTex}));
-    head.position.y = 0.95;
-    g.add(body, head);
-    g.position.set((Math.random()-0.5)*100, 1.2, (Math.random()-0.5)*100);
-    scene.add(g);
-    enemies.push({mesh: g, hp: 5, lastHit: 0});
-}
+    /** ИНИЦИАЛИЗАЦИЯ */
+    init() {
+        this.setupRenderer();
+        this.setupScene();
+        this.setupLights();
+        this.setupPlayer();
+        this.generateWorld();
+        this.setupHUD();
+        this.bindEvents();
+        
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('hud').style.display = 'block';
+        this.controls.lock();
+        
+        this.loop();
+    },
 
-window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
-window.onmousedown = () => { if(controls.isLocked) doAttack(); };
+    setupRenderer() {
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.toneMapping = THREE.ReinhardToneMapping;
+        document.body.appendChild(this.renderer.domElement);
+    },
 
-let attackT = 0;
-function doAttack() {
-    attackT = 1.0;
-    // Рейкаст урона
-    const ray = new THREE.Raycaster();
-    ray.setFromCamera({x:0, y:0}, camera);
-    const hits = ray.intersectObjects(scene.children, true);
-    for(let h of hits) {
-        let root = h.object; while(root.parent && root.parent !== scene) root = root.parent;
-        let e = enemies.find(en => en.mesh === root);
-        if(e && h.distance < 4) {
-            e.hp -= 2; e.lastHit = Date.now();
-            if(e.hp <= 0) { scene.remove(e.mesh); enemies.splice(enemies.indexOf(e), 1); spawnAlex(); }
+    setupScene() {
+        this.scene.background = new THREE.Color(0x000205);
+        this.scene.fog = new THREE.FogExp2(0x000205, 0.025);
+        
+        // Floor
+        const groundGeo = new THREE.PlaneGeometry(2000, 2000);
+        const groundMat = new THREE.MeshStandardMaterial({ 
+            color: 0x050505, 
+            metalness: 0.8, 
+            roughness: 0.2 
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        this.scene.add(ground);
+
+        const grid = new THREE.GridHelper(2000, 80, 0x00ffff, 0x002222);
+        this.scene.add(grid);
+    },
+
+    setupLights() {
+        const ambient = new THREE.AmbientLight(0x4040ff, 0.3);
+        this.scene.add(ambient);
+
+        this.playerLight = new THREE.PointLight(0x00ffff, 2, 20);
+        this.camera.add(this.playerLight);
+        this.scene.add(this.camera);
+    },
+
+    setupPlayer() {
+        this.controls = new PointerLockControls(this.camera, document.body);
+        this.camera.position.set(0, 1.8, 0);
+
+        // Hand Container
+        this.handRoot = new THREE.Group();
+        this.camera.add(this.handRoot);
+
+        this.createWeaponModels();
+    },
+
+    /** ОРУЖИЕ И ПРЕДМЕТЫ */
+    createWeaponModels() {
+        const createPixelTex = (c1, c2) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 8; canvas.height = 8;
+            const ctx = canvas.getContext('2d');
+            for(let i=0; i<8; i++) for(let j=0; j<8; j++) {
+                ctx.fillStyle = Math.random() > 0.5 ? c1 : c2;
+                ctx.fillRect(i, j, 1, 1);
+            }
+            const t = new THREE.CanvasTexture(canvas);
+            t.magFilter = THREE.NearestFilter;
+            return t;
+        };
+
+        const metalMat = new THREE.MeshStandardMaterial({ map: createPixelTex('#777','#0ff'), emissive: 0x00ffff, emissiveIntensity: 0.2 });
+        const woodMat = new THREE.MeshStandardMaterial({ map: createPixelTex('#5d2e0d','#8b4513') });
+
+        // 1. Кирка
+        const pickaxe = new THREE.Group();
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 0.1), woodMat);
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.15, 0.2), metalMat);
+        head.position.y = 0.45; pickaxe.add(handle, head);
+        
+        // 2. Меч
+        const sword = new THREE.Group();
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.05), metalMat);
+        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.15), metalMat);
+        blade.position.y = 0.5; sword.add(blade, guard);
+
+        this.weaponItems = [pickaxe, sword];
+        this.weaponItems.forEach(w => {
+            w.position.set(0.6, -0.5, -1);
+            w.rotation.x = Math.PI/4;
+            w.visible = false;
+            this.handRoot.add(w);
+        });
+        
+        this.weaponItems[0].visible = true;
+    },
+
+    /** МИР И ВРАГИ */
+    generateWorld() {
+        for(let i=0; i<100; i++) {
+            const h = 20 + Math.random() * 100;
+            const w = 10 + Math.random() * 10;
+            const geo = new THREE.BoxGeometry(w, h, w);
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: 0x000000, 
+                emissive: 0x00ffff, 
+                emissiveIntensity: Math.random() * 0.2 
+            });
+            const b = new THREE.Mesh(geo, mat);
+            b.position.set((Math.random()-0.5)*600, h/2, (Math.random()-0.5)*600);
+            this.scene.add(b);
+            this.entities.buildings.push(new THREE.Box3().setFromObject(b));
         }
-    }
-}
+        
+        for(let i=0; i<20; i++) this.spawnAlex();
+    },
 
-function animate() {
-    requestAnimationFrame(animate);
-    const delta = clock.getDelta();
-    const elapsed = clock.getElapsedTime();
+    spawnAlex() {
+        const alex = new THREE.Group();
+        const mat = new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.1 });
+        const skin = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+        
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.4), mat);
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skin);
+        head.position.y = 1;
+        
+        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00ffff}));
+        eyeL.position.set(0.15, 1.1, 0.25);
+        const eyeR = eyeL.clone(); eyeR.position.x = -0.15;
+        
+        alex.add(body, head, eyeL, eyeR);
+        
+        // Random Pos
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 50 + Math.random() * 100;
+        alex.position.set(Math.cos(angle)*dist, 1.1, Math.sin(angle)*dist);
+        
+        this.scene.add(alex);
+        this.entities.enemies.push({
+            mesh: alex,
+            hp: 6,
+            state: 'IDLE',
+            lastAttack: 0
+        });
+    },
 
-    if(controls.isLocked) {
-        // --- ФИЗИКА И ЗАЩИТА ОТ ПРОВАЛИВАНИЯ ---
-        const speed = keys['shift'] ? 0.3 : 0.15;
-        if(keys['w']) controls.moveForward(speed);
-        if(keys['s']) controls.moveForward(-speed);
-        if(keys['a']) controls.moveRight(-speed);
-        if(keys['d']) controls.moveRight(speed);
+    /** ИГРОВАЯ ЛОГИКА */
+    bindEvents() {
+        const keys = {};
+        window.onkeydown = (e) => {
+            keys[e.code] = true;
+            if(e.code.startsWith('Digit')) {
+                const slot = parseInt(e.key) - 1;
+                if(slot >= 0 && slot < 4) this.switchSlot(slot);
+            }
+        };
+        window.onkeyup = (e) => keys[e.code] = false;
+        window.onmousedown = () => { if(this.controls.isLocked) this.attack(); };
+        
+        this.input = keys;
+        
+        window.onresize = () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+    },
 
-        // Фиксация высоты (Steve Height = 1.8)
-        const groundHeight = 1.8;
-        if (camera.position.y > groundHeight) playerVelocity.y -= GRAVITY * delta;
-        camera.position.y += playerVelocity.y;
+    switchSlot(id) {
+        if(this.params.currentSlot === id) return;
+        this.params.currentSlot = id;
+        this.anims.switchT = 0; // Trigger anim
+        
+        const slots = document.querySelectorAll('.slot');
+        slots.forEach(s => s.classList.remove('active'));
+        slots[id].classList.add('active');
+        
+        setTimeout(() => {
+            this.weaponItems.forEach((w, i) => w.visible = (i === id));
+        }, 150);
+    },
 
-        if (camera.position.y < groundHeight) {
-            camera.position.y = groundHeight;
-            playerVelocity.y = 0;
+    attack() {
+        if(this.anims.attackT > 0) return;
+        this.anims.attackT = 1.0;
+        
+        // Raycast
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera({x:0, y:0}, this.camera);
+        const hits = ray.intersectObjects(this.scene.children, true);
+        
+        for(let hit of hits) {
+            let root = hit.object;
+            while(root.parent && root.parent !== this.scene) root = root.parent;
+            
+            const enemy = this.entities.enemies.find(e => e.mesh === root);
+            if(enemy && hit.distance < 4) {
+                enemy.hp -= 2;
+                this.createBlood(hit.point);
+                
+                // Knockback
+                const dir = root.position.clone().sub(this.camera.position).normalize();
+                root.position.add(dir.multiplyScalar(2));
+                
+                if(enemy.hp <= 0) {
+                    this.scene.remove(root);
+                    this.entities.enemies = this.entities.enemies.filter(e => e !== enemy);
+                    this.params.enemiesKilled++;
+                    setTimeout(() => this.spawnAlex(), 3000);
+                }
+                break;
+            }
+        }
+    },
+
+    createBlood(pos) {
+        for(let i=0; i<15; i++) {
+            const p = new THREE.Mesh(
+                new THREE.BoxGeometry(0.1, 0.1, 0.1),
+                new THREE.MeshBasicMaterial({ color: 0x00ffff })
+            );
+            p.position.copy(pos);
+            const vel = new THREE.Vector3(
+                (Math.random()-0.5)*0.3,
+                Math.random()*0.3,
+                (Math.random()-0.5)*0.3
+            );
+            this.scene.add(p);
+            this.entities.particles.push({ mesh: p, vel, life: 1.0 });
+        }
+    },
+
+    takeDamage() {
+        this.params.hp -= 1;
+        document.getElementById('damage-flash').style.background = 'rgba(255, 0, 100, 0.4)';
+        setTimeout(() => {
+            document.getElementById('damage-flash').style.background = 'rgba(255, 0, 100, 0)';
+        }, 100);
+        this.updateHUD();
+        if(this.params.hp <= 0) location.reload();
+    },
+
+    setupHUD() {
+        const container = document.getElementById('health-container');
+        container.innerHTML = '';
+        for(let i=0; i<this.params.maxHp; i++) {
+            const d = document.createElement('div');
+            d.className = 'cell filled';
+            container.appendChild(d);
+        }
+    },
+
+    updateHUD() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((c, i) => {
+            c.className = i < this.params.hp ? 'cell filled' : 'cell';
+        });
+    },
+
+    /** CORE LOOP */
+    loop() {
+        requestAnimationFrame(() => this.loop());
+        const delta = this.clock.getDelta();
+        const time = this.clock.getElapsedTime();
+        
+        if(this.controls.isLocked) {
+            this.updateMovement(delta);
+            this.updateAnimations(delta, time);
+            this.updateAI(delta);
+            this.updateParticles();
+        }
+        
+        this.renderer.render(this.scene, this.camera);
+    },
+
+    updateMovement(delta) {
+        const speed = this.input['ShiftLeft'] ? 0.35 : 0.18;
+        const move = new THREE.Vector3();
+        
+        if(this.input['KeyW']) move.z -= 1;
+        if(this.input['KeyS']) move.z += 1;
+        if(this.input['KeyA']) move.x -= 1;
+        if(this.input['KeyD']) move.x += 1;
+        
+        move.normalize();
+        this.controls.moveRight(move.x * speed);
+        this.controls.moveForward(-move.z * speed);
+        
+        // Ground Lock System (No falling)
+        const targetHeight = 1.8;
+        if(this.camera.position.y !== targetHeight) {
+            this.camera.position.y = targetHeight;
         }
 
-        // --- АНИМАЦИИ ПРЕДМЕТА ---
-        // 1. Hand Sway (Занос при повороте)
-        hand.position.x = THREE.MathUtils.lerp(hand.position.x, -mouseMovement.x * 0.001, 0.1);
-        hand.position.y = THREE.MathUtils.lerp(hand.position.y, mouseMovement.y * 0.001, 0.1);
-        mouseMovement.x *= 0.9; mouseMovement.y *= 0.9;
+        // World Bounds
+        if(this.camera.position.x > 900) this.camera.position.x = 900;
+        if(this.camera.position.x < -900) this.camera.position.x = -900;
+        if(this.camera.position.z > 900) this.camera.position.z = 900;
+        if(this.camera.position.z < -900) this.camera.position.z = -900;
+    },
 
-        // 2. View Bobbing (Тряска при ходьбе)
-        const isMoving = keys['w'] || keys['s'] || keys['a'] || keys['d'];
+    updateAnimations(delta, time) {
+        // 1. Weapon Sway (Mouse Delay)
+        // В Three.js PointerLock не дает напрямую смещение, используем интерполяцию
+        this.handRoot.position.x = THREE.MathUtils.lerp(this.handRoot.position.x, 0, 0.1);
+        this.handRoot.position.y = THREE.MathUtils.lerp(this.handRoot.position.y, 0, 0.1);
+
+        // 2. View Bobbing
+        const isMoving = this.input['KeyW'] || this.input['KeyS'] || this.input['KeyA'] || this.input['KeyD'];
         if(isMoving) {
-            const bob = Math.sin(elapsed * 12) * 0.05;
-            const tilt = Math.cos(elapsed * 12) * 0.02;
-            hand.position.y += bob;
-            camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, tilt, 0.1);
-            if(keys['shift']) camera.fov = THREE.MathUtils.lerp(camera.fov, 95, 0.1);
+            this.anims.bobStep += delta * (this.input['ShiftLeft'] ? 15 : 10);
+            const bobY = Math.abs(Math.sin(this.anims.bobStep)) * 0.08;
+            const bobX = Math.cos(this.anims.bobStep * 0.5) * 0.04;
+            this.handRoot.position.y = bobY - 0.1;
+            this.handRoot.position.x = bobX;
+            
+            // Camera Tilt
+            this.camera.rotation.z = THREE.MathUtils.lerp(this.camera.rotation.z, Math.cos(this.anims.bobStep * 0.5) * 0.02, 0.1);
         } else {
-            camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, 0, 0.1);
-            camera.fov = THREE.MathUtils.lerp(camera.fov, 85, 0.1);
+            this.handRoot.position.y = THREE.MathUtils.lerp(this.handRoot.position.y, Math.sin(time * 2) * 0.02, 0.05);
+            this.camera.rotation.z = THREE.MathUtils.lerp(this.camera.rotation.z, 0, 0.1);
         }
-        camera.updateProjectionMatrix();
 
         // 3. Attack Animation
-        if(attackT > 0) {
-            attackT -= delta * 5;
-            hand.rotation.x = Math.sin(attackT * Math.PI) * 1.5;
-            hand.rotation.y = Math.sin(attackT * Math.PI) * 0.5;
+        if(this.anims.attackT > 0) {
+            this.anims.attackT -= delta * 6;
+            this.handRoot.rotation.x = Math.sin(this.anims.attackT * Math.PI) * 1.5;
+            this.handRoot.rotation.z = Math.sin(this.anims.attackT * Math.PI) * 0.5;
+            this.handRoot.position.z = -Math.sin(this.anims.attackT * Math.PI) * 0.5;
+        } else {
+            this.handRoot.rotation.x = THREE.MathUtils.lerp(this.handRoot.rotation.x, 0, 0.1);
+            this.handRoot.rotation.z = THREE.MathUtils.lerp(this.handRoot.rotation.z, 0, 0.1);
+            this.handRoot.position.z = THREE.MathUtils.lerp(this.handRoot.position.z, 0, 0.1);
         }
 
-        // Враги (AI)
-        enemies.forEach(e => {
-            const dist = e.mesh.position.distanceTo(camera.position);
-            const isHit = Date.now() - e.lastHit < 150;
-            e.mesh.traverse(m => { if(m.isMesh) m.material.emissive?.setHex(isHit ? 0xff0000 : 0x000000); });
+        // 4. Switch Slot Anim
+        if(this.anims.switchT < 1.0) {
+            this.anims.switchT += delta * 5;
+            const offset = Math.sin(this.anims.switchT * Math.PI) * -0.8;
+            this.handRoot.position.y += offset;
+        }
+    },
 
-            if(dist < 20) {
-                const dir = camera.position.clone().sub(e.mesh.position).setY(0).normalize();
-                e.mesh.position.add(dir.multiplyScalar(0.04));
-                e.mesh.lookAt(camera.position.x, 1.2, camera.position.z);
+    updateAI(delta) {
+        const playerPos = this.camera.position;
+        
+        this.entities.enemies.forEach(enemy => {
+            const dist = enemy.mesh.position.distanceTo(playerPos);
+            
+            // Visual hit feedback
+            const isHit = (Date.now() - enemy.lastHit < 100);
+            enemy.mesh.traverse(m => {
+                if(m.isMesh && m.material.emissive) {
+                    m.material.emissiveIntensity = isHit ? 5 : 0.2;
+                }
+            });
+
+            if(dist < 40) {
+                // Look at player
+                enemy.mesh.lookAt(playerPos.x, enemy.mesh.position.y, playerPos.z);
+                
+                // Move logic
+                if(dist > 1.8) {
+                    const dir = playerPos.clone().sub(enemy.mesh.position).normalize();
+                    enemy.mesh.position.x += dir.x * 0.07;
+                    enemy.mesh.position.z += dir.z * 0.07;
+                } else {
+                    // Attack Player
+                    if(Date.now() - enemy.lastAttack > 1500) {
+                        this.takeDamage();
+                        enemy.lastAttack = Date.now();
+                    }
+                }
             }
         });
-    }
+    },
 
-    renderer.render(scene, camera);
-}
+    updateParticles() {
+        for(let i = this.entities.particles.length-1; i >= 0; i--) {
+            const p = this.entities.particles[i];
+            p.mesh.position.add(p.vel);
+            p.vel.y -= 0.01; // Gravity
+            p.life -= 0.02;
+            p.mesh.scale.setScalar(p.life);
+            
+            if(p.life <= 0) {
+                this.scene.remove(p.mesh);
+                this.entities.particles.splice(i, 1);
+            }
+        }
+    }
+};
+
+// Global Exposure for button
+window.Game = Game;
 </script>
 </body>
 </html>
