@@ -2,43 +2,34 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>STEVE REVENGE: CYBERPUNK ULTRA EDITION</title>
+    <title>CYBER STEVE: PHYSICAL REVOLUTION</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Press Start 2P', cursive; color: #fff; }
-        #overlay { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,255,255,0.1) 0%, #000 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; transition: 0.5s; }
-        .title { font-size: 50px; color: #0ff; text-shadow: 5px 5px #f0f; margin-bottom: 40px; text-align: center; line-height: 1.2; }
-        .btn { width: 380px; padding: 25px; background: #333; border: 4px solid #0ff; color: #0ff; cursor: pointer; text-align: center; font-size: 14px; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); transition: 0.2s; }
-        .btn:hover { background: #0ff; color: #000; box-shadow: 0 0 30px #0ff; transform: scale(1.05); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Press Start 2P', cursive; }
+        #overlay { position: absolute; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; color: #0ff; }
+        .btn { padding: 20px 40px; border: 4px solid #0ff; background: none; color: #0ff; cursor: pointer; font-family: inherit; font-size: 20px; transition: 0.3s; }
+        .btn:hover { background: #0ff; color: #000; box-shadow: 0 0 20px #0ff; }
         #hud { position: absolute; width: 100%; height: 100%; pointer-events: none; display: none; }
-        #hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0,0,0,0.8); padding: 10px; border: 2px solid #0ff; border-radius: 5px; }
-        .slot { width: 50px; height: 50px; border: 2px solid #444; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: 0.1s; position: relative; }
-        .slot.active { border-color: #0ff; box-shadow: 0 0 15px #0ff; background: rgba(0,255,255,0.2); transform: translateY(-5px); }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); }
-        #crosshair::before { content: ''; position: absolute; top: 14px; width: 30px; height: 2px; background: #0ff; }
-        #crosshair::after { content: ''; position: absolute; left: 14px; width: 2px; height: 30px; background: #0ff; }
-        #health-ui { position: absolute; bottom: 100px; left: 50%; transform: translateX(-240px); display: flex; gap: 5px; }
-        .heart { width: 20px; height: 20px; background: #f0f; border-radius: 3px; box-shadow: 0 0 10px #f0f; }
-        #blood-fx { position: absolute; width: 100%; height: 100%; background: rgba(255,0,0,0); pointer-events: none; transition: 0.1s; }
+        #hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; background: rgba(0,255,255,0.15); border: 2px solid #0ff; padding: 5px; backdrop-filter: blur(5px); }
+        .slot { width: 50px; height: 50px; border: 2px solid #333; margin: 0 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; }
+        .slot.active { border-color: #0ff; background: rgba(0,255,255,0.3); box-shadow: 0 0 10px #0ff; }
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 15px; height: 15px; border: 2px solid #fff; border-radius: 50%; mix-blend-mode: difference; }
     </style>
 </head>
 <body>
 
-<div id="blood-fx"></div>
-
 <div id="overlay">
-    <div class="title">CYBER STEVE<br><span style="font-size: 20px; color: #f0f;">BLOOD AND NEON</span></div>
-    <div class="btn" onclick="initGame()">INITIALIZE SYSTEM</div>
+    <h1 style="margin-bottom: 50px; text-shadow: 0 0 15px #0ff;">SYSTEM LOADING...</h1>
+    <button class="btn" onclick="init()">BOOT STEVE.EXE</button>
 </div>
 
 <div id="hud">
     <div id="crosshair"></div>
-    <div id="health-ui"></div>
     <div id="hotbar">
         <div class="slot active" id="s0">⚒</div>
         <div class="slot" id="s1">⚔</div>
-        <div class="slot" id="s2">⚡</div>
-        <div class="slot" id="s3">💊</div>
+        <div class="slot" id="s2">🔌</div>
+        <div class="slot" id="s3">📦</div>
     </div>
 </div>
 
@@ -55,37 +46,29 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-// --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 let scene, camera, renderer, controls, clock;
-let handContainer, currentItemIndex = 0;
-let enemies = [], particles = [];
-let player = { hp: 10, maxHp: 10, isAttacking: false, stamina: 100 };
-const items = ['PICKAXE', 'SWORD', 'BOLT', 'MEDKIT'];
+let hand, currentItem, enemies = [];
+let keys = {};
+let mouseMovement = { x: 0, y: 0 };
+const GRAVITY = 0.5;
+let playerVelocity = new THREE.Vector3();
 
-// --- ГЕНЕРАЦИЯ ТЕКСТУР (PIXEL ART) ---
-const createTex = (c1, c2) => {
-    const canv = document.createElement('canvas');
-    canv.width = 16; canv.height = 16;
+// Текстуры
+const texLoader = new THREE.TextureLoader();
+const pixelTex = (c1, c2) => {
+    const canv = document.createElement('canvas'); canv.width = 8; canv.height = 8;
     const ctx = canv.getContext('2d');
-    for(let i=0; i<16; i++) for(let j=0; j<16; j++) {
-        ctx.fillStyle = Math.random() > 0.6 ? c1 : c2;
+    for(let i=0; i<8; i++) for(let j=0; j<8; j++) {
+        ctx.fillStyle = Math.random() > 0.5 ? c1 : c2;
         ctx.fillRect(i, j, 1, 1);
     }
-    const t = new THREE.CanvasTexture(canv);
-    t.magFilter = THREE.NearestFilter;
-    return t;
+    const t = new THREE.CanvasTexture(canv); t.magFilter = THREE.NearestFilter; return t;
 };
 
-const tex = {
-    steve: createTex('#008888', '#00cccc'),
-    alex: createTex('#aa44aa', '#ff77ff'),
-    skin: createTex('#e0ac69', '#ffdbac'),
-    metal: createTex('#444', '#0ff'),
-    neon: createTex('#330033', '#f0f')
-};
+const skinTex = pixelTex('#ffdbac', '#e0ac69');
+const steveTex = pixelTex('#00cccc', '#008888');
 
-// --- ИНИЦИАЛИЗАЦИЯ ---
-window.initGame = () => {
+window.init = () => {
     setup();
     animate();
     controls.lock();
@@ -93,253 +76,157 @@ window.initGame = () => {
 
 function setup() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000205);
-    scene.fog = new THREE.FogExp2(0x000205, 0.03);
+    scene.background = new THREE.Color(0x00050a);
+    scene.fog = new THREE.FogExp2(0x00050a, 0.03);
 
-    camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.toneMapping = THREE.ReinhardToneMapping;
     document.body.appendChild(renderer.domElement);
 
     controls = new PointerLockControls(camera, document.body);
     clock = new THREE.Clock();
 
-    controls.addEventListener('lock', () => { 
-        document.getElementById('overlay').style.opacity = '0';
+    controls.addEventListener('lock', () => {
+        document.getElementById('overlay').style.display = 'none';
         document.getElementById('hud').style.display = 'block';
-        setTimeout(() => document.getElementById('overlay').style.display = 'none', 500);
-    });
-
-    controls.addEventListener('unlock', () => {
-        document.getElementById('overlay').style.display = 'flex';
-        document.getElementById('overlay').style.opacity = '1';
-        document.getElementById('hud').style.display = 'none';
     });
 
     // Свет
-    const amb = new THREE.AmbientLight(0xffffff, 0.2);
-    scene.add(amb);
-    const point = new THREE.PointLight(0x00ffff, 2, 30);
-    camera.add(point);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    const pLight = new THREE.PointLight(0x00ffff, 2, 25);
+    camera.add(pLight);
     scene.add(camera);
 
-    // Мир
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1 }));
-    ground.rotation.x = -Math.PI / 2;
+    // Пол (Бесконечный)
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, metalness: 0.5 }));
+    ground.rotation.x = -Math.PI/2;
     scene.add(ground);
 
-    const grid = new THREE.GridHelper(1000, 100, 0x00ffff, 0x111122);
+    // Сетка
+    const grid = new THREE.GridHelper(2000, 100, 0x00ffff, 0x111122);
     scene.add(grid);
 
-    // Оружие в руках
-    handContainer = new THREE.Group();
-    camera.add(handContainer);
-    updateHandItem();
-
-    // ХП Бар
-    const hpUi = document.getElementById('health-ui');
-    for(let i=0; i<player.maxHp; i++) {
-        const h = document.createElement('div'); h.className = 'heart'; hpUi.appendChild(h);
-    }
-
-    spawnBuildings();
-    for(let i=0; i<15; i++) spawnEnemy();
-}
-
-// --- МОДЕЛИРОВАНИЕ ---
-function updateHandItem() {
-    handContainer.clear();
-    const group = new THREE.Group();
-    
     // Рука
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 1), new THREE.MeshStandardMaterial({ map: tex.steve }));
-    arm.position.set(0.6, -0.4, -0.5);
-    group.add(arm);
+    hand = new THREE.Group();
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), new THREE.MeshStandardMaterial({map: steveTex}));
+    arm.position.set(0.6, -0.5, -0.6);
+    hand.add(arm);
+    camera.add(hand);
 
-    // Предмет
-    let obj;
-    if(currentItemIndex === 0) { // Кирка
-        obj = new THREE.Group();
-        const s = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.1), new THREE.MeshStandardMaterial({color: 0x8b4513}));
-        const h = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.2), new THREE.MeshStandardMaterial({map: tex.metal, emissive: 0x00ffff}));
-        h.position.y = 0.4; obj.add(s, h);
-    } else if(currentItemIndex === 1) { // Меч
-        obj = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.05), new THREE.MeshStandardMaterial({map: tex.metal, emissive: 0x00ffff}));
-    } else {
-        obj = new THREE.Mesh(new THREE.IcosahedronGeometry(0.2, 0), new THREE.MeshStandardMaterial({color: 0xf0f}));
-    }
+    // Инструмент
+    currentItem = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.15), new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ffff}));
+    currentItem.position.set(0.6, -0.2, -1.1);
+    currentItem.rotation.x = Math.PI/4;
+    hand.add(currentItem);
+
+    for(let i=0; i<15; i++) spawnAlex();
     
-    obj.position.set(0.6, -0.1, -1.0);
-    obj.rotation.x = Math.PI/4;
-    group.add(obj);
-    handContainer.add(group);
+    // Слежка за мышью для Sway
+    document.addEventListener('mousemove', (e) => {
+        mouseMovement.x = e.movementX;
+        mouseMovement.y = e.movementY;
+    });
 }
 
-function spawnEnemy() {
+function spawnAlex() {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.3, 0.4), new THREE.MeshStandardMaterial({ map: tex.alex }));
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ map: tex.skin }));
-    head.position.y = 0.9;
-    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({ color: 0x0000ff }));
-    lLeg.position.set(0.2, -1.1, 0);
-    const rLeg = lLeg.clone(); rLeg.position.x = -0.2;
-    
-    g.add(body, head, lLeg, rLeg);
-    g.position.set((Math.random()-0.5)*150, 2.1, (Math.random()-0.5)*150);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.4), new THREE.MeshStandardMaterial({color: 0xff00ff}));
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({map: skinTex}));
+    head.position.y = 0.95;
+    g.add(body, head);
+    g.position.set((Math.random()-0.5)*100, 1.2, (Math.random()-0.5)*100);
     scene.add(g);
-    enemies.push({ mesh: g, hp: 6, lastHit: 0, lLeg, rLeg });
+    enemies.push({mesh: g, hp: 5, lastHit: 0});
 }
 
-function spawnBuildings() {
-    for(let i=0; i<80; i++) {
-        const h = 20 + Math.random()*80;
-        const b = new THREE.Mesh(new THREE.BoxGeometry(10, h, 10), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, emissive: 0x00ffff, emissiveIntensity: 0.1 }));
-        b.position.set((Math.random()-0.5)*400, h/2, (Math.random()-0.5)*400);
-        scene.add(b);
-    }
-}
+window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+window.onmousedown = () => { if(controls.isLocked) doAttack(); };
 
-// --- СИСТЕМА ВЗАИМОДЕЙСТВИЯ ---
-const raycaster = new THREE.Raycaster();
-function performAction() {
-    if(player.isAttacking) return;
-    player.isAttacking = true;
-    
-    // Анимация удара
-    const tl = new THREE.Vector3(0, 0.5, -0.5);
-    handContainer.position.add(tl);
-    setTimeout(() => {
-        handContainer.position.sub(tl);
-        player.isAttacking = false;
-    }, 200);
-
-    raycaster.setFromCamera({x:0, y:0}, camera);
-    const hits = raycaster.intersectObjects(scene.children, true);
-
-    for(let hit of hits) {
-        let root = hit.object;
-        while(root.parent && root.parent !== scene) root = root.parent;
-        
-        let target = enemies.find(e => e.mesh === root);
-        if(target && hit.distance < 4) {
-            target.hp -= 2;
-            target.lastHit = Date.now();
-            createParticles(hit.point, 0x00ffff);
-            
-            // Отдача врагу
-            const push = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(2);
-            target.mesh.position.add(push);
-
-            if(target.hp <= 0) {
-                scene.remove(target.mesh);
-                enemies = enemies.filter(e => e !== target);
-                spawnEnemy();
-            }
-            break;
+let attackT = 0;
+function doAttack() {
+    attackT = 1.0;
+    // Рейкаст урона
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera({x:0, y:0}, camera);
+    const hits = ray.intersectObjects(scene.children, true);
+    for(let h of hits) {
+        let root = h.object; while(root.parent && root.parent !== scene) root = root.parent;
+        let e = enemies.find(en => en.mesh === root);
+        if(e && h.distance < 4) {
+            e.hp -= 2; e.lastHit = Date.now();
+            if(e.hp <= 0) { scene.remove(e.mesh); enemies.splice(enemies.indexOf(e), 1); spawnAlex(); }
         }
     }
 }
 
-function createParticles(pos, color) {
-    for(let i=0; i<10; i++) {
-        const p = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1), new THREE.MeshBasicMaterial({color: color}));
-        p.position.copy(pos);
-        p.userData.vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.2, (Math.random()-0.5)*0.2);
-        p.userData.life = 1.0;
-        scene.add(p);
-        particles.push(p);
-    }
-}
-
-// --- УПРАВЛЕНИЕ ---
-const keys = {};
-window.addEventListener('keydown', e => {
-    keys[e.key.toLowerCase()] = true;
-    if(e.key >= '1' && e.key <= '4') {
-        currentItemIndex = parseInt(e.key) - 1;
-        updateHandItem();
-        document.querySelectorAll('.slot').forEach((s, i) => s.classList.toggle('active', i === currentItemIndex));
-    }
-});
-window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-window.addEventListener('mousedown', () => { if(controls.isLocked) performAction(); });
-
-// --- ГЛАВНЫЙ ЦИКЛ ---
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     const elapsed = clock.getElapsedTime();
 
     if(controls.isLocked) {
-        // Движение и Тряска (View Bobbing)
+        // --- ФИЗИКА И ЗАЩИТА ОТ ПРОВАЛИВАНИЯ ---
         const speed = keys['shift'] ? 0.3 : 0.15;
-        const isMoving = keys['w'] || keys['s'] || keys['a'] || keys['d'];
-        
         if(keys['w']) controls.moveForward(speed);
         if(keys['s']) controls.moveForward(-speed);
         if(keys['a']) controls.moveRight(-speed);
         if(keys['d']) controls.moveRight(speed);
 
-        // Анимация рук
-        const bobX = isMoving ? Math.cos(elapsed * 10) * 0.05 : 0;
-        const bobY = isMoving ? Math.abs(Math.sin(elapsed * 10)) * 0.05 : Math.sin(elapsed * 2) * 0.01;
-        handContainer.position.set(bobX, bobY, 0);
+        // Фиксация высоты (Steve Height = 1.8)
+        const groundHeight = 1.8;
+        if (camera.position.y > groundHeight) playerVelocity.y -= GRAVITY * delta;
+        camera.position.y += playerVelocity.y;
 
-        // ИИ врагов
+        if (camera.position.y < groundHeight) {
+            camera.position.y = groundHeight;
+            playerVelocity.y = 0;
+        }
+
+        // --- АНИМАЦИИ ПРЕДМЕТА ---
+        // 1. Hand Sway (Занос при повороте)
+        hand.position.x = THREE.MathUtils.lerp(hand.position.x, -mouseMovement.x * 0.001, 0.1);
+        hand.position.y = THREE.MathUtils.lerp(hand.position.y, mouseMovement.y * 0.001, 0.1);
+        mouseMovement.x *= 0.9; mouseMovement.y *= 0.9;
+
+        // 2. View Bobbing (Тряска при ходьбе)
+        const isMoving = keys['w'] || keys['s'] || keys['a'] || keys['d'];
+        if(isMoving) {
+            const bob = Math.sin(elapsed * 12) * 0.05;
+            const tilt = Math.cos(elapsed * 12) * 0.02;
+            hand.position.y += bob;
+            camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, tilt, 0.1);
+            if(keys['shift']) camera.fov = THREE.MathUtils.lerp(camera.fov, 95, 0.1);
+        } else {
+            camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, 0, 0.1);
+            camera.fov = THREE.MathUtils.lerp(camera.fov, 85, 0.1);
+        }
+        camera.updateProjectionMatrix();
+
+        // 3. Attack Animation
+        if(attackT > 0) {
+            attackT -= delta * 5;
+            hand.rotation.x = Math.sin(attackT * Math.PI) * 1.5;
+            hand.rotation.y = Math.sin(attackT * Math.PI) * 0.5;
+        }
+
+        // Враги (AI)
         enemies.forEach(e => {
             const dist = e.mesh.position.distanceTo(camera.position);
             const isHit = Date.now() - e.lastHit < 150;
-            
-            e.mesh.traverse(m => {
-                if(m.isMesh) m.material.emissive?.setHex(isHit ? 0xff0000 : 0x000000);
-            });
+            e.mesh.traverse(m => { if(m.isMesh) m.material.emissive?.setHex(isHit ? 0xff0000 : 0x000000); });
 
-            if(dist < 30) {
+            if(dist < 20) {
                 const dir = camera.position.clone().sub(e.mesh.position).setY(0).normalize();
-                e.mesh.position.add(dir.multiplyScalar(0.05));
-                e.mesh.lookAt(camera.position.x, e.mesh.position.y, camera.position.z);
-                
-                e.lLeg.rotation.x = Math.sin(elapsed * 10) * 0.5;
-                e.rLeg.rotation.x = -Math.sin(elapsed * 10) * 0.5;
-
-                // Урон игроку
-                if(dist < 1.5 && Math.random() < 0.01) {
-                    player.hp -= 1;
-                    document.getElementById('blood-fx').style.background = 'rgba(255,0,0,0.4)';
-                    setTimeout(() => document.getElementById('blood-fx').style.background = 'rgba(255,0,0,0)', 100);
-                    updateHpUi();
-                }
+                e.mesh.position.add(dir.multiplyScalar(0.04));
+                e.mesh.lookAt(camera.position.x, 1.2, camera.position.z);
             }
         });
     }
 
-    // Частицы
-    for(let i=particles.length-1; i>=0; i--) {
-        const p = particles[i];
-        p.position.add(p.userData.vel);
-        p.userData.life -= 0.02;
-        p.scale.setScalar(p.userData.life);
-        if(p.userData.life <= 0) {
-            scene.remove(p);
-            particles.splice(i, 1);
-        }
-    }
-
     renderer.render(scene, camera);
 }
-
-function updateHpUi() {
-    const hearts = document.querySelectorAll('.heart');
-    hearts.forEach((h, i) => h.style.opacity = i < player.hp ? '1' : '0.2');
-    if(player.hp <= 0) location.reload();
-}
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
 </script>
 </body>
 </html>
