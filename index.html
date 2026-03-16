@@ -9,7 +9,7 @@
 body{
 margin:0;
 overflow:hidden;
-background:black;
+background:#000;
 font-family:Arial;
 }
 
@@ -19,6 +19,7 @@ top:10px;
 left:10px;
 color:white;
 font-size:18px;
+z-index:10;
 }
 
 #inventory{
@@ -26,12 +27,11 @@ position:absolute;
 top:60px;
 left:10px;
 color:white;
-font-size:16px;
 }
 
 #quest{
 position:absolute;
-top:120px;
+top:110px;
 left:10px;
 color:#00ffff;
 }
@@ -52,11 +52,12 @@ color:#00ffff;
 📜 Квест: собрать 5 рыб
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 
 let scene = new THREE.Scene()
+scene.background = new THREE.Color(0x000000)
 
 let camera = new THREE.PerspectiveCamera(
 75,
@@ -69,28 +70,24 @@ let renderer = new THREE.WebGLRenderer({antialias:true})
 renderer.setSize(window.innerWidth,window.innerHeight)
 document.body.appendChild(renderer.domElement)
 
+camera.position.set(0,10,15)
+
 let light = new THREE.PointLight(0x00ffff,2,200)
-light.position.set(0,50,0)
+light.position.set(0,40,0)
 scene.add(light)
 
-let ambient = new THREE.AmbientLight(0xffffff,0.5)
+let ambient = new THREE.AmbientLight(0xffffff,0.7)
 scene.add(ambient)
 
 let groundGeo = new THREE.PlaneGeometry(2000,2000)
-
-let groundMat = new THREE.MeshStandardMaterial({
-color:0x080820
-})
+let groundMat = new THREE.MeshStandardMaterial({color:0x080820})
 
 let ground = new THREE.Mesh(groundGeo,groundMat)
 ground.rotation.x=-Math.PI/2
 scene.add(ground)
 
 let catGeo = new THREE.BoxGeometry(2,1,4)
-
-let catMat = new THREE.MeshStandardMaterial({
-color:0xff9933
-})
+let catMat = new THREE.MeshStandardMaterial({color:0xff9933})
 
 let cat = new THREE.Mesh(catGeo,catMat)
 cat.position.y=1
@@ -98,7 +95,7 @@ scene.add(cat)
 
 let buildings=[]
 
-for(let i=0;i<200;i++){
+for(let i=0;i<150;i++){
 
 let geo=new THREE.BoxGeometry(
 5+Math.random()*20,
@@ -113,11 +110,13 @@ emissive:0x001122
 
 let b=new THREE.Mesh(geo,mat)
 
-b.position.x=Math.random()*1000-500
-b.position.z=Math.random()*1000-500
+b.position.x=Math.random()*800-400
+b.position.z=Math.random()*800-400
 b.position.y=geo.parameters.height/2
 
 scene.add(b)
+
+b.box=new THREE.Box3().setFromObject(b)
 
 buildings.push(b)
 
@@ -133,21 +132,13 @@ document.addEventListener("keyup",e=>{
 keys[e.key.toLowerCase()]=false
 })
 
-let inventory={
-fish:0
-}
-
-let quest={
-target:5,
-done:false
-}
+let inventory={fish:0}
+let quest={target:5,done:false}
 
 function updateUI(){
 
 document.getElementById("fish").innerText=inventory.fish
-
-let items=document.getElementById("items")
-items.innerHTML="🐟 Рыба x"+inventory.fish
+document.getElementById("items").innerHTML="🐟 Рыба x"+inventory.fish
 
 if(inventory.fish>=quest.target && !quest.done){
 
@@ -162,7 +153,7 @@ let fishItems=[]
 
 function spawnFish(){
 
-let geo=new THREE.SphereGeometry(1,16,16)
+let geo=new THREE.SphereGeometry(1,12,12)
 
 let mat=new THREE.MeshStandardMaterial({
 color:0x00ffff,
@@ -183,46 +174,49 @@ fishItems.push(f)
 
 for(let i=0;i<15;i++) spawnFish()
 
-let robots=[]
+let speed=0.35
 
-function spawnRobot(){
+function checkCollision(x,z){
 
-let geo=new THREE.BoxGeometry(2,4,2)
+let playerBox=new THREE.Box3(
+new THREE.Vector3(x-1,0,z-1),
+new THREE.Vector3(x+1,2,z+1)
+)
 
-let mat=new THREE.MeshStandardMaterial({
-color:0x8888ff
-})
+for(let b of buildings){
 
-let r=new THREE.Mesh(geo,mat)
-
-r.position.x=Math.random()*300-150
-r.position.z=Math.random()*300-150
-r.position.y=2
-
-scene.add(r)
-
-robots.push(r)
+if(playerBox.intersectsBox(b.box)) return true
 
 }
 
-for(let i=0;i<8;i++) spawnRobot()
+return false
+
+}
 
 function updateCat(){
 
-let speed=0.25
+let newX=cat.position.x
+let newZ=cat.position.z
 
-if(keys["w"]) cat.position.z-=speed
-if(keys["s"]) cat.position.z+=speed
-if(keys["a"]) cat.position.x-=speed
-if(keys["d"]) cat.position.x+=speed
+if(keys["w"]) newZ-=speed
+if(keys["s"]) newZ+=speed
+if(keys["a"]) newX-=speed
+if(keys["d"]) newX+=speed
+
+if(!checkCollision(newX,newZ)){
+
+cat.position.x=newX
+cat.position.z=newZ
+
+}
 
 }
 
 function updateCamera(){
 
-camera.position.x=cat.position.x
-camera.position.y=cat.position.y+8
-camera.position.z=cat.position.z+12
+camera.position.x = cat.position.x
+camera.position.z = cat.position.z + 15
+camera.position.y = 10
 
 camera.lookAt(cat.position)
 
@@ -240,7 +234,6 @@ let dist=Math.sqrt(dx*dx+dz*dz)
 if(dist<3){
 
 inventory.fish++
-
 updateUI()
 
 f.position.x=Math.random()*200-100
@@ -252,60 +245,6 @@ f.position.z=Math.random()*200-100
 
 }
 
-function updateRobots(){
-
-robots.forEach(r=>{
-
-r.rotation.y+=0.02
-
-let dx=cat.position.x-r.position.x
-let dz=cat.position.z-r.position.z
-
-let dist=Math.sqrt(dx*dx+dz*dz)
-
-if(dist<15){
-
-r.position.x+=dx*0.01
-r.position.z+=dz*0.01
-
-}
-
-})
-
-}
-
-function saveGame(){
-
-localStorage.setItem("cybercat_save",
-JSON.stringify({
-fish:inventory.fish,
-x:cat.position.x,
-z:cat.position.z
-})
-)
-
-}
-
-function loadGame(){
-
-let data=localStorage.getItem("cybercat_save")
-
-if(!data) return
-
-let save=JSON.parse(data)
-
-inventory.fish=save.fish
-cat.position.x=save.x
-cat.position.z=save.z
-
-updateUI()
-
-}
-
-setInterval(saveGame,5000)
-
-loadGame()
-
 function animate(){
 
 requestAnimationFrame(animate)
@@ -313,24 +252,13 @@ requestAnimationFrame(animate)
 updateCat()
 updateCamera()
 updateFish()
-updateRobots()
 
 renderer.render(scene,camera)
 
 }
 
 updateUI()
-
 animate()
-
-window.addEventListener("resize",()=>{
-
-camera.aspect=window.innerWidth/window.innerHeight
-camera.updateProjectionMatrix()
-
-renderer.setSize(window.innerWidth,window.innerHeight)
-
-})
 
 </script>
 
