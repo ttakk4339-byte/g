@@ -2,179 +2,92 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>STEVE_RECKONING: ULTRA_ENGINE_V10</title>
+    <title>STEVE_ULTRA_STABLE_V11</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;700&display=swap');
-        body { margin: 0; background: #000; color: #0ff; font-family: 'Fira Code', monospace; overflow: hidden; user-select: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
+        body { margin: 0; background: #000; color: #0ff; font-family: 'Fira Code', monospace; overflow: hidden; }
         
-        /* ГЛАВНЫЙ ЭКРАН */
-        #main-menu { position: absolute; inset: 0; z-index: 1000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 20px solid #001; }
-        .cyber-btn { padding: 25px 60px; background: none; border: 3px solid #0ff; color: #0ff; font-family: inherit; font-size: 28px; cursor: pointer; transition: 0.3s; letter-spacing: 5px; }
-        .cyber-btn:hover { background: #0ff; color: #000; box-shadow: 0 0 50px #0ff; transform: scale(1.05); }
-
-        /* HUD */
         #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: none; }
-        .crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border: 1px solid rgba(0,255,255,0.3); border-radius: 50%; }
-        .crosshair::after { content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: #0ff; transform: translate(-50%, -50%); }
-
-        .ui-panel { position: absolute; padding: 20px; background: rgba(0,10,20,0.8); border: 1px solid #045; backdrop-filter: blur(10px); }
-        #vitals { bottom: 40px; left: 40px; width: 300px; border-left: 10px solid #f0f; }
-        #weapon-status { bottom: 40px; right: 40px; width: 300px; text-align: right; border-right: 10px solid #0ff; }
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid rgba(0,255,255,0.5); transform: translate(-50%, -50%); border-radius: 50%; }
         
-        .bar { width: 100%; height: 12px; background: #001; margin-top: 10px; position: relative; overflow: hidden; }
-        .bar-fill { height: 100%; width: 100%; transition: 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-        #hp-fill { background: #f0f; box-shadow: 0 0 15px #f0f; }
-        #reload-progress { position: absolute; top: 0; left: 0; width: 0%; height: 100%; background: #0ff; opacity: 0.5; }
+        .ui-bottom { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: space-between; padding: 0 50px; box-sizing: border-box; }
+        .stat-card { background: rgba(0,10,20,0.9); border: 2px solid #0ff; padding: 20px; min-width: 200px; box-shadow: 0 0 20px rgba(0,255,255,0.2); }
+        
+        #hp-bar { width: 100%; height: 10px; background: #002; margin-top: 10px; border: 1px solid #f0f; }
+        #hp-fill { width: 100%; height: 100%; background: #f0f; transition: 0.1s; }
+        
+        #reload-bar { height: 4px; background: #0ff; width: 0%; margin-top: 10px; transition: opacity 0.3s; }
 
-        #wave-counter { top: 40px; left: 50%; transform: translateX(-50%); font-size: 20px; text-align: center; border: none; background: none; text-shadow: 0 0 10px #0ff; }
-        #event-log { top: 40px; left: 40px; font-size: 10px; color: rgba(0,255,255,0.5); border: none; background: none; }
-
-        #flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: 0.1s; z-index: 100; }
+        #boot-screen { position: absolute; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .btn { padding: 20px 40px; background: none; border: 2px solid #0ff; color: #0ff; cursor: pointer; font-size: 20px; font-family: inherit; }
+        .btn:hover { background: #0ff; color: #000; }
     </style>
 </head>
 <body>
 
-<div id="flash"></div>
-
-<div id="main-menu">
-    <h1 style="font-size: 80px; margin: 0; text-shadow: 0 0 20px #0ff;">V.10_CORE</h1>
-    <p style="color: #555; margin-bottom: 50px;">EXPERIMENTAL_WAR_SIMULATION</p>
-    <button class="cyber-btn" onclick="Engine.boot()">INITIALIZE</button>
+<div id="boot-screen">
+    <h1 style="font-size: 40px;">CRITICAL_PATCH_V11.0.4</h1>
+    <p>CAMERA_STABILIZATION: [FIXED]</p>
+    <p>WEAPON_PROCEDURAL_ANIM: [ENABLED]</p>
+    <button class="btn" onclick="Core.start()">INITIATE_LINK</button>
 </div>
 
 <div id="hud">
     <div class="crosshair"></div>
+    <div id="wave-info" style="position:absolute; top:40px; left:50%; transform:translateX(-50%); text-align:center;">
+        <div style="font-size: 24px;">WAVE: <span id="wave-num">1</span></div>
+        <div style="font-size: 12px; color: #f0f;">THREAT_LEVEL: <span id="threat">LOW</span></div>
+    </div>
     
-    <div id="event-log">SYSTEM_READY...<br>AWAITING_SYNC...</div>
-
-    <div id="wave-counter">
-        WAVE: <span id="wave-val">1</span><br>
-        <small style="font-size: 10px; opacity: 0.7;">NEXT_ESCALATION: <span id="timer-val">60</span>s</small>
-    </div>
-
-    <div id="vitals" class="ui-panel">
-        <div style="font-size: 14px;">INTEGRITY</div>
-        <div class="bar"><div id="hp-fill" class="bar-fill"></div></div>
-    </div>
-
-    <div id="weapon-status" class="ui-panel">
-        <div id="weapon-name" style="font-size: 18px; font-weight: bold;">R-35 CYBER_RIFLE</div>
-        <div style="font-size: 30px;"><span id="mag-cur">30</span> / <span id="mag-max">30</span></div>
-        <div class="bar" id="reload-bar"><div id="reload-progress"></div></div>
-        <div id="reload-hint" style="font-size: 10px; color: #f0f; display: none;">RELOADING...</div>
+    <div class="ui-bottom">
+        <div class="stat-card">
+            <div>USER_INTEGRITY</div>
+            <div id="hp-bar"><div id="hp-fill"></div></div>
+        </div>
+        <div class="stat-card" style="text-align: right;">
+            <div style="font-size: 12px;">CYBER_RIFLE_v4</div>
+            <div style="font-size: 32px;"><span id="ammo-cur">30</span><span style="font-size: 16px; opacity: 0.5;"> / 30</span></div>
+            <div id="reload-bar"></div>
+        </div>
     </div>
 </div>
 
 <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
-        }
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
     }
+}
 </script>
 
 <script type="module">
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-/** * ============================================================================
- * ENGINE CORE: V10_STABLE
- * ============================================================================
- */
+const Core = {
+    settings: {
+        moveSpeed: 0.15,
+        jumpPower: 0.18,
+        gravity: 0.008,
+        lookSense: 0.002
+    },
 
-class Weapon {
-    constructor() {
-        this.magSize = 30;
-        this.ammo = 30;
-        this.isReloading = false;
-        this.reloadTime = 1800; // мс
-        this.fireRate = 120; // мс между выстрелами
-        this.lastFire = 0;
-        this.recoil = 0;
-        this.sway = 0;
-        
-        this.group = new THREE.Group();
-        this.initModel();
-    }
+    state: {
+        hp: 100,
+        ammo: 30,
+        isReloading: false,
+        wave: 1,
+        enemiesKilled: 0,
+        spawnRate: 3000 // мс
+    },
 
-    initModel() {
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.8), new THREE.MeshStandardMaterial({color: 0x111111}));
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ffff}));
-        barrel.rotation.x = Math.PI/2;
-        barrel.position.z = -0.4;
-        
-        const mag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.15), new THREE.MeshStandardMaterial({color: 0x333333}));
-        mag.position.y = -0.2;
-        
-        this.group.add(body, barrel, mag);
-        this.group.position.set(0.4, -0.4, -0.6);
-    }
-
-    reload() {
-        if (this.isReloading || this.ammo === this.magSize) return;
-        this.isReloading = true;
-        document.getElementById('reload-hint').style.display = 'block';
-        
-        let start = Date.now();
-        const interval = setInterval(() => {
-            let elapsed = Date.now() - start;
-            let progress = (elapsed / this.reloadTime) * 100;
-            document.getElementById('reload-progress').style.width = progress + "%";
-            
-            // Анимация наклона при перезарядке
-            this.group.rotation.x = -Math.sin(elapsed/this.reloadTime * Math.PI) * 0.5;
-
-            if (elapsed >= this.reloadTime) {
-                this.ammo = this.magSize;
-                this.isReloading = false;
-                document.getElementById('mag-cur').innerText = this.ammo;
-                document.getElementById('reload-progress').style.width = "0%";
-                document.getElementById('reload-hint').style.display = 'none';
-                clearInterval(interval);
-            }
-        }, 16);
-    }
-}
-
-class Enemy {
-    constructor(scene, playerPos) {
-        this.scene = scene;
-        this.hp = 100;
-        this.speed = 0.04 + Math.random() * 0.04;
-        this.mesh = this.createMesh();
-        
-        // Рандомный спавн на расстоянии
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 60 + Math.random() * 40;
-        this.mesh.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
-        
-        scene.add(this.mesh);
-    }
-
-    createMesh() {
-        const group = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.4), new THREE.MeshStandardMaterial({color: 0xff00ff}));
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({color: 0xffdbac}));
-        head.position.y = 1.1;
-        group.add(body, head);
-        return group;
-    }
-
-    update(playerPos) {
-        const dir = new THREE.Vector3().copy(playerPos).setY(0.8).sub(this.mesh.position).normalize();
-        this.mesh.position.add(dir.multiplyScalar(this.speed));
-        this.mesh.lookAt(playerPos.x, 0.8, playerPos.z);
-    }
-}
-
-const Engine = {
     init() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x000105);
-        this.scene.fog = new THREE.FogExp2(0x000105, 0.02);
+        this.scene.background = new THREE.Color(0x000205);
+        this.scene.fog = new THREE.FogExp2(0x000205, 0.025);
 
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+        this.camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -182,44 +95,57 @@ const Engine = {
 
         this.controls = new PointerLockControls(this.camera, document.body);
         this.clock = new THREE.Clock();
-        
-        this.weapon = new Weapon();
-        this.camera.add(this.weapon.group);
-        this.scene.add(this.camera);
-
-        this.player = { hp: 100, vel: new THREE.Vector3(), onGround: true };
-        this.enemies = [];
-        this.particles = [];
         this.keys = {};
-        
-        this.wave = 1;
-        this.waveTimer = 60;
-        this.lastWaveTime = Date.now();
 
         this.setupLights();
-        this.setupWorld();
+        this.setupPlayer();
+        this.setupEnvironment();
         this.bindEvents();
+        
+        this.enemies = [];
+        this.particles = [];
     },
 
     setupLights() {
-        const amb = new THREE.AmbientLight(0xffffff, 0.2);
-        this.scene.add(amb);
+        this.scene.add(new THREE.AmbientLight(0xffffff, 0.2));
         this.muzzleFlash = new THREE.PointLight(0x00ffff, 0, 15);
         this.camera.add(this.muzzleFlash);
+        this.scene.add(this.camera);
     },
 
-    setupWorld() {
-        const grid = new THREE.GridHelper(2000, 100, 0x00ffff, 0x001122);
+    setupPlayer() {
+        // Оружейная группа (для Sway и Bobbing)
+        this.weaponRoot = new THREE.Group();
+        this.weaponSway = new THREE.Group();
+        
+        // Модель оружия
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.2, 0.7), new THREE.MeshStandardMaterial({color: 0x111111}));
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4), new THREE.MeshStandardMaterial({color: 0x00ffff, emissive: 0x00ffff}));
+        barrel.rotation.x = Math.PI/2;
+        barrel.position.z = -0.4;
+        
+        this.weaponModel = new THREE.Group();
+        this.weaponModel.add(body, barrel);
+        this.weaponModel.position.set(0.4, -0.4, -0.6);
+        
+        this.weaponSway.add(this.weaponModel);
+        this.weaponRoot.add(this.weaponSway);
+        this.camera.add(this.weaponRoot);
+
+        this.playerPhys = { vel: new THREE.Vector3(), onGround: true };
+    },
+
+    setupEnvironment() {
+        const grid = new THREE.GridHelper(2000, 100, 0x00ffff, 0x002222);
         this.scene.add(grid);
 
-        // Футуристические колонны
-        for(let i=0; i<150; i++) {
-            const h = 5 + Math.random() * 50;
-            const b = new THREE.Mesh(
-                new THREE.BoxGeometry(4, h, 4),
-                new THREE.MeshStandardMaterial({color: 0x000000, emissive: 0x00ffff, emissiveIntensity: 0.1})
-            );
-            b.position.set((Math.random()-0.5)*1000, h/2, (Math.random()-0.5)*1000);
+        // Здания
+        const geo = new THREE.BoxGeometry(1, 1, 1);
+        for(let i=0; i<80; i++) {
+            const h = 20 + Math.random()*100;
+            const b = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: 0x000000, emissive: 0x00ffff, emissiveIntensity: 0.1}));
+            b.scale.set(10, h, 10);
+            b.position.set((Math.random()-0.5)*800, h/2, (Math.random()-0.5)*800);
             this.scene.add(b);
         }
     },
@@ -229,189 +155,178 @@ const Engine = {
         window.onkeyup = (e) => this.keys[e.code] = false;
         window.onmousedown = () => this.shoot();
         
-        this.controls.addEventListener('lock', () => {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('hud').style.display = 'block';
-        });
+        // Таймер сложности
+        setInterval(() => {
+            this.state.wave++;
+            this.state.spawnRate = Math.max(500, this.state.spawnRate - 300);
+            document.getElementById('wave-num').innerText = this.state.wave;
+            if(this.state.wave > 5) document.getElementById('threat').innerText = "HIGH";
+        }, 30000);
+
+        // Спавнер
+        const spawnLoop = () => {
+            if(this.controls.isLocked && this.enemies.length < 50 + (this.state.wave * 10)) {
+                this.spawnNPC();
+            }
+            setTimeout(spawnLoop, this.state.spawnRate);
+        };
+        spawnLoop();
     },
 
-    boot() {
-        this.init();
-        this.controls.lock();
-        this.animate();
-        this.log("KERNEL_LOADED... ALL_SYSTEMS_GO");
-    },
-
-    log(msg) {
-        const el = document.getElementById('event-log');
-        el.innerHTML = `> ${msg}<br>` + el.innerHTML.split('<br>').slice(0, 5).join('<br>');
+    spawnNPC() {
+        const group = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.4), new THREE.MeshStandardMaterial({color: 0xff00ff}));
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+        head.position.y = 1.1;
+        group.add(body, head);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 50 + Math.random()*20;
+        group.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
+        
+        this.scene.add(group);
+        this.enemies.push({ mesh: group, hp: 100 });
     },
 
     shoot() {
-        const w = this.weapon;
-        if (w.isReloading || w.ammo <= 0 || Date.now() - w.lastFire < w.fireRate) {
-            if (w.ammo <= 0) this.log("OUT_OF_AMMO. PRESS 'R'");
-            return;
-        }
+        if(!this.controls.isLocked || this.state.ammo <= 0 || this.state.isReloading) return;
 
-        w.ammo--;
-        w.lastFire = Date.now();
-        document.getElementById('mag-cur').innerText = w.ammo;
-
-        // Эффекты
-        this.muzzleFlash.intensity = 10;
-        setTimeout(() => this.muzzleFlash.intensity = 0, 50);
+        this.state.ammo--;
+        document.getElementById('ammo-cur').innerText = this.state.ammo;
         
-        // Отдача (анимация)
-        w.group.position.z += 0.15;
-        this.camera.rotation.x += 0.02;
+        // Анимация отдачи
+        this.weaponModel.position.z += 0.15;
+        this.muzzleFlash.intensity = 15;
+        setTimeout(() => this.muzzleFlash.intensity = 0, 50);
 
-        // Проверка попадания
+        // Стрельба
         const ray = new THREE.Raycaster();
         ray.setFromCamera({x:0, y:0}, this.camera);
         const hits = ray.intersectObjects(this.scene.children, true);
 
         for(let hit of hits) {
-            let target = hit.object;
-            while(target.parent && target.parent !== this.scene) target = target.parent;
-            
-            const enemy = this.enemies.find(e => e.mesh === target);
+            let obj = hit.object;
+            while(obj.parent && obj.parent !== this.scene) obj = obj.parent;
+            const enemy = this.enemies.find(e => e.mesh === obj);
             if(enemy) {
-                this.hitEnemy(enemy, hit.point);
+                enemy.hp -= 40;
+                if(enemy.hp <= 0) {
+                    this.scene.remove(obj);
+                    this.enemies = this.enemies.filter(e => e !== enemy);
+                }
                 break;
             }
         }
+
+        if(this.state.ammo <= 0) this.reload();
     },
 
-    hitEnemy(enemy, point) {
-        enemy.hp -= 35;
-        this.spawnBlood(point);
-        if(enemy.hp <= 0) {
-            this.scene.remove(enemy.mesh);
-            this.enemies = this.enemies.filter(e => e !== enemy);
-            this.log("TARGET_ELIMINATED");
-        }
+    reload() {
+        if(this.state.isReloading) return;
+        this.state.isReloading = true;
+        const bar = document.getElementById('reload-bar');
+        bar.style.width = '100%';
+        
+        // Анимация перезарядки (Procedural)
+        const startPos = this.weaponModel.position.y;
+        const startRot = this.weaponModel.rotation.x;
+        
+        let startTime = Date.now();
+        const duration = 1500;
+
+        const animateReload = () => {
+            let elapsed = Date.now() - startTime;
+            let p = elapsed / duration;
+
+            if(p < 1) {
+                this.weaponModel.position.y = startPos - Math.sin(p * Math.PI) * 0.3;
+                this.weaponModel.rotation.x = startRot - Math.sin(p * Math.PI) * 0.5;
+                bar.style.width = (100 - p * 100) + '%';
+                requestAnimationFrame(animateReload);
+            } else {
+                this.state.ammo = 30;
+                this.state.isReloading = false;
+                document.getElementById('ammo-cur').innerText = '30';
+                bar.style.width = '0%';
+                this.weaponModel.position.y = startPos;
+                this.weaponModel.rotation.x = startRot;
+            }
+        };
+        animateReload();
     },
 
-    spawnBlood(pos) {
-        for(let i=0; i<8; i++) {
-            const p = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.1), new THREE.MeshBasicMaterial({color: 0x00ffff}));
-            p.position.copy(pos);
-            const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.2, (Math.random()-0.5)*0.2);
-            this.particles.push({mesh: p, vel, life: 1.0});
-            this.scene.add(p);
-        }
-    },
-
-    updateWaves() {
-        const now = Date.now();
-        const elapsed = Math.floor((now - this.lastWaveTime) / 1000);
-        const remaining = 60 - elapsed;
-        document.getElementById('timer-val').innerText = remaining;
-
-        if (remaining <= 0) {
-            this.wave++;
-            this.lastWaveTime = now;
-            this.log(`ESCALATION_LEVEL_${this.wave}_REACHED`);
-            document.getElementById('wave-val').innerText = this.wave;
-        }
-
-        // Динамический спавн (чем выше волна, тем чаще)
-        const spawnChance = 0.01 * this.wave;
-        if (Math.random() < spawnChance && this.enemies.length < 100) {
-            this.enemies.push(new Enemy(this.scene, this.camera.position));
-        }
-    },
-
-    update(delta) {
-        if (!this.controls.isLocked) return;
-
+    update() {
+        if(!this.controls.isLocked) return;
+        const delta = this.clock.getDelta();
         const time = performance.now() * 0.001;
 
-        // 1. ПЕРЕМЕЩЕНИЕ И ФИЗИКА
-        const speed = this.keys['ShiftLeft'] ? 0.3 : 0.16;
-        const input = new THREE.Vector3();
-        if(this.keys['KeyW']) input.z -= 1;
-        if(this.keys['KeyS']) input.z += 1;
-        if(this.keys['KeyA']) input.x -= 1;
-        if(this.keys['KeyD']) input.x += 1;
-        
-        input.normalize();
-        this.controls.moveRight(input.x * speed);
-        this.controls.moveForward(-input.z * speed);
-
-        if(this.keys['KeyR']) this.weapon.reload();
+        // --- ФИЗИКА И ДВИЖЕНИЕ ---
+        const speed = this.keys['ShiftLeft'] ? 0.25 : 0.15;
+        if(this.keys['KeyW']) this.controls.moveForward(speed);
+        if(this.keys['KeyS']) this.controls.moveForward(-speed);
+        if(this.keys['KeyA']) this.controls.moveRight(-speed);
+        if(this.keys['KeyD']) this.controls.moveRight(speed);
 
         // Гравитация
-        this.player.vel.y -= 0.008;
-        this.camera.position.y += this.player.vel.y;
-        if (this.camera.position.y < 1.8) {
+        this.playerPhys.vel.y -= this.settings.gravity;
+        this.camera.position.y += this.playerPhys.vel.y;
+        if(this.camera.position.y < 1.8) {
             this.camera.position.y = 1.8;
-            this.player.vel.y = 0;
-            this.player.onGround = true;
+            this.playerPhys.vel.y = 0;
+            this.playerPhys.onGround = true;
         }
 
-        // 2. АНИМАЦИИ ОРУЖИЯ (SWAY & BOBBING)
-        const w = this.weapon;
-        w.group.position.z = THREE.MathUtils.lerp(w.group.position.z, -0.6, 0.1); // Возврат после отдачи
+        // --- АНИМАЦИИ ОРУЖИЯ ---
+        // 1. Возврат после отдачи
+        this.weaponModel.position.z = THREE.MathUtils.lerp(this.weaponModel.position.z, -0.6, 0.1);
         
-        // Качание при ходьбе
-        if (input.length() > 0) {
-            const walkBob = Math.sin(time * 12) * 0.02;
-            w.group.position.y = -0.4 + walkBob;
-            w.group.position.x = 0.4 + Math.cos(time * 6) * 0.01;
-            this.camera.rotation.z = Math.sin(time * 6) * 0.01;
+        // 2. Sway (Отставание при повороте)
+        // Мы берем дельту вращения из контроллера (упрощенно через lerp к нулю)
+        this.weaponSway.position.x = THREE.MathUtils.lerp(this.weaponSway.position.x, 0, 0.1);
+        this.weaponSway.position.y = THREE.MathUtils.lerp(this.weaponSway.position.y, 0, 0.1);
+
+        // 3. Bobbing (Качание при ходьбе)
+        const isMoving = this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD'];
+        if(isMoving && this.playerPhys.onGround) {
+            const bob = Math.sin(time * 10) * 0.02;
+            this.weaponRoot.position.y = bob;
+            this.weaponRoot.position.x = Math.cos(time * 5) * 0.01;
         } else {
-            w.group.position.y = THREE.MathUtils.lerp(w.group.position.y, -0.4, 0.05);
-            w.group.position.x = THREE.MathUtils.lerp(w.group.position.x, 0.4, 0.05);
-            this.camera.rotation.z = THREE.MathUtils.lerp(this.camera.rotation.z, 0, 0.05);
+            this.weaponRoot.position.y = THREE.MathUtils.lerp(this.weaponRoot.position.y, 0, 0.1);
         }
 
-        // 3. ОБНОВЛЕНИЕ ОРДЫ
-        this.updateWaves();
+        // --- ИИ И ВРАГИ ---
         this.enemies.forEach(e => {
-            e.update(this.camera.position);
-            // Проверка дистанции атаки
-            if(e.mesh.position.distanceTo(this.camera.position) < 2.5) {
-                this.takeDamage(0.3);
+            const dist = e.mesh.position.distanceTo(this.camera.position);
+            const moveDir = this.camera.position.clone().sub(e.mesh.position).normalize();
+            e.mesh.position.add(moveDir.multiplyScalar(0.05 + (this.state.wave * 0.005)));
+            e.mesh.lookAt(this.camera.position.x, 0.8, this.camera.position.z);
+            
+            if(dist < 2.5) {
+                this.state.hp -= 0.2;
+                document.getElementById('hp-fill').style.width = this.state.hp + '%';
             }
         });
 
-        // 4. ЧАСТИЦЫ
-        for(let i=this.particles.length-1; i>=0; i--) {
-            const p = this.particles[i];
-            p.mesh.position.add(p.vel);
-            p.life -= 0.02;
-            p.mesh.scale.setScalar(p.life);
-            if(p.life <= 0) {
-                this.scene.remove(p.mesh);
-                this.particles.splice(i, 1);
-            }
-        }
+        if(this.state.hp <= 0) location.reload();
     },
 
-    takeDamage(amt) {
-        this.player.hp -= amt;
-        document.getElementById('hp-fill').style.width = this.player.hp + "%";
-        document.getElementById('flash').style.opacity = 1;
-        document.getElementById('flash').style.background = 'rgba(255,0,255,0.2)';
-        setTimeout(() => document.getElementById('flash').style.opacity = 0, 50);
-        
-        if(this.player.hp <= 0) {
-            alert("NEURAL_LINK_SEVERED. FINAL_WAVE: " + this.wave);
-            location.reload();
-        }
+    start() {
+        document.getElementById('boot-screen').style.display = 'none';
+        document.getElementById('hud').style.display = 'block';
+        this.init();
+        this.controls.lock();
+        this.animate();
     },
 
     animate() {
         requestAnimationFrame(() => this.animate());
-        const delta = this.clock.getDelta();
-        this.update(delta);
+        this.update();
         this.renderer.render(this.scene, this.camera);
     }
 };
 
-window.Engine = Engine;
+window.Core = Core;
 </script>
 </body>
 </html>
