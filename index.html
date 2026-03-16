@@ -2,87 +2,84 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>CyberCat - MC Edition</title>
+    <title>CyberCat: FIRST PERSON SURVIVAL</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; user-select: none; }
         
-        /* ГЛАВНЫЙ ОВЕРЛЕЙ */
+        /* ГЛАВНЫЙ МЕНЮ ОВЕРЛЕЙ */
         #ui-layer {
-            position: absolute; width: 100%; height: 100%;
-            z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+            position: absolute; width: 100%; height: 100%; z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.9));
         }
-
-        /* КНОПКИ В СТИЛЕ MC */
         .mc-btn {
-            width: 400px; height: 40px; margin: 4px;
-            background: #4a4a4a; border: 2px solid #000;
+            width: 350px; height: 40px; margin: 5px; background: #4a4a4a; border: 2px solid #000;
             color: #e0e0e0; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; position: relative; font-weight: bold; font-size: 16px;
+            cursor: pointer; font-weight: bold; font-size: 16px;
             box-shadow: inset -2px -2px 0px #212121, inset 2px 2px 0px #8b8b8b;
         }
         .mc-btn:hover { background: #6b6b6b; color: #ffffa0; border-color: #fff; }
-        .mc-btn:active { box-shadow: inset 2px 2px 0px #212121, inset -2px -2px 0px #8b8b8b; }
 
-        .title-box { margin-bottom: 60px; text-align: center; }
-        .main-title { font-size: 72px; color: #fff; text-shadow: 5px 5px #3f3f3f; letter-spacing: 5px; font-weight: 900; }
-        .splash { color: #ffff00; font-size: 20px; transform: rotate(-20deg); display: inline-block; animation: bounce 0.4s infinite alternate; text-shadow: 2px 2px #3f3f00; }
+        /* ИГРОВОЙ ХАД (HUD) */
+        #hud { position: absolute; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 1000; }
         
-        @keyframes bounce { from { transform: rotate(-20deg) scale(1); } to { transform: rotate(-20deg) scale(1.15); } }
+        /* Бар ХП (Сердечки) */
+        #hp-bar { position: absolute; bottom: 60px; left: 50%; transform: translateX(-110px); display: flex; gap: 2px; }
+        .heart { width: 18px; height: 18px; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWf95fAAAAAXNSR0IArs4c6QAAAHBJREFUOE9jZKAQMFKon2EUjIKhAQwMDIyMjIwM//8zMvz9z8jA8P8fIxfDf7B4fX0DIwPDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DIwNDf7B4fX0DIwND/wAAlY0+I8HwUf8AAAAASUVORK5CYII=') no-repeat; background-size: contain; }
+        .heart.empty { background-position: -18px 0; } /* Упрощено для примера */
 
-        /* ОКНО НАСТРОЕК */
-        #settings-screen { display: none; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; }
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .setting-item { width: 300px; display: flex; flex-direction: column; align-items: center; color: #aaa; }
-        input[type=range] { width: 100%; cursor: pointer; }
+        /* Бар Голода */
+        #hunger-bar { position: absolute; bottom: 60px; right: 50%; transform: translateX(110px); display: flex; gap: 2px; flex-direction: row-reverse; }
+        .food { width: 18px; height: 18px; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWf95fAAAAAXNSR0IArs4c6QAAAGVJREFUOE9jZKAQMFKon2EUjIKhAQwMDIyMjIwM//8zMvz9z8jA8P8fIxfDf7B4fX0DIwPDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DMwNDf7B4fX0DIwNDf7B4fX0DIwND/wAAlY0+I8HwUf8AAAAASUVORK5CYII=') no-repeat; background-size: contain; filter: hue-rotate(90deg); }
 
-        /* ИГРОВОЙ ХАД */
-        #hud { position: absolute; top: 20px; left: 20px; color: #fff; pointer-events: none; display: none; }
-        .crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; transform: translate(-50%, -50%); border-radius: 50%; mix-blend-mode: difference; }
+        /* Бар Стамины */
+        #stamina-bar { position: absolute; bottom: 90px; left: 50%; transform: translateX(-100px); width: 200px; height: 6px; background: #222; border: 1px solid #000; }
+        #stamina-fill { width: 100%; height: 100%; background: #0f0; transition: width 0.1s; }
+
+        /* Хотбар (Ячейки) */
+        #hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 364px; height: 44px; background: rgba(0,0,0,0.5); border: 4px solid #8b8b8b; display: flex; gap: 2px; padding: 2px; box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #000; }
+        .slot { width: 36px; height: 36px; background: rgba(139,139,139,0.5); border: 2px solid #000; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .slot.selected { border-color: #fff; box-shadow: 0 0 5px #fff; }
+
+        /* Прицел */
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; transform: translate(-50%, -50%); mix-blend-mode: difference; color: white; font-size: 24px; font-weight: bold; }
+
+        /* Эффект Урона */
+        #damage-flash { position: absolute; width: 100%; height: 100%; background: rgba(255,0,0,0); pointer-events: none; transition: background 0.1s; z-index: 1500; }
     </style>
 </head>
 <body>
 
-<div id="ui-layer">
-    <div id="main-menu">
-        <div class="title-box">
-            <div class="main-title">CYBER CAT</div>
-            <div class="splash">MADE BY GEMINI!</div>
-        </div>
-        <div class="mc-btn" onclick="play()">Singleplayer</div>
-        <div class="mc-btn" onclick="openSettings()">Options...</div>
-        <div class="mc-btn" style="color: #777; cursor: not-allowed;">Multiplayer (Soon)</div>
-        <div class="mc-btn" onclick="window.location.reload()">Quit Game</div>
-    </div>
+<div id="damage-flash"></div>
 
-    <div id="settings-screen">
-        <h2 style="color: white; margin-bottom: 30px;">Options</h2>
-        <div class="settings-grid">
-            <div class="setting-item">
-                <label>FOV: <span id="fov-val">75</span></label>
-                <input type="range" id="fov" min="30" max="110" value="75">
-            </div>
-            <div class="setting-item">
-                <label>Graphics: <span id="gfx-val">Fancy</span></label>
-                <div class="mc-btn" style="width: 200px;" onclick="toggleGfx()">Fancy</div>
-            </div>
-            <div class="setting-item">
-                <label>Render Distance: <span id="dist-val">Normal</span></label>
-                <input type="range" id="dist" min="1" max="3" value="2">
-            </div>
-            <div class="setting-item">
-                <label>Music & Sounds</label>
-                <div class="mc-btn" style="width: 200px; color: #555;">Disabled</div>
-            </div>
-        </div>
-        <div class="mc-btn" onclick="closeSettings()">Done</div>
-    </div>
+<div id="ui-layer">
+    <h1 style="color: #fff; font-size: 64px; text-shadow: 4px 4px #000; margin-bottom: 50px;">CYBER STEVE</h1>
+    <div class="mc-btn" onclick="startGame()">Singleplayer</div>
+    <div class="mc-btn" onclick="window.location.reload()">Quit Game</div>
 </div>
 
 <div id="hud">
-    <div style="font-size: 24px; text-shadow: 2px 2px #000;">🐟 Energy: <span id="score">0</span></div>
+    <div id="crosshair">+</div>
+    
+    <div id="hp-bar">
+        <div class="heart"></div><div class="heart"></div><div class="heart"></div><div class="heart"></div><div class="heart"></div>
+        <div class="heart"></div><div class="heart"></div><div class="heart"></div><div class="heart"></div><div class="heart"></div>
+    </div>
+    
+    <div id="stamina-bar"><div id="stamina-fill"></div></div>
+
+    <div id="hunger-bar">
+        <div class="food"></div><div class="food"></div><div class="food"></div><div class="food"></div><div class="food"></div>
+        <div class="food"></div><div class="food"></div><div class="food"></div><div class="food"></div><div class="food"></div>
+    </div>
+
+    <div id="hotbar">
+        <div class="slot selected">⚒️</div>
+        <div class="slot">⚔️</div>
+        <div class="slot"></div><div class="slot"></div><div class="slot"></div>
+        <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+    </div>
 </div>
-<div class="crosshair" id="cross" style="display:none"></div>
 
 <script type="importmap">
     {
@@ -95,64 +92,114 @@
 
 <script type="module">
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+// --- НАСТРОЙКИ И СОСТОЯНИЕ ---
+const state = { 
+    paused: true, 
+    hp: 20, // 10 сердечек
+    stamina: 100,
+    hunger: 20,
+    bobTime: 0
+};
+const CONFIG = { speed: 0.3, sprintSpeed: 0.5, enemyDamage: 2 };
 
 // --- ДВИЖОК ---
-const state = { paused: true, score: 0, fancy: true };
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x010103);
+scene.fog = new THREE.FogExp2(0x010103, 0.015); // Густой туман
+
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 1.8, 0); // Высота глаз Стива
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ReinhardToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// Свечение
-const composer = new EffectComposer(renderer);
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-composer.addPass(new RenderPass(scene, camera));
-composer.addPass(bloomPass);
+// ПЕРВОЕ ЛИЦО УПРАВЛЕНИЕ (PointerLock)
+const controls = new PointerLockControls(camera, document.body);
 
-// --- МИР ---
-scene.background = new THREE.Color(0x020205);
-const fog = new THREE.FogExp2(0x020205, 0.01);
-scene.fog = fog;
+// --- СВЕТ ---
+scene.add(new THREE.AmbientLight(0x101020, 0.5));
+const handLight = new THREE.PointLight(0x00ffff, 1, 15); // Свет от кирки
+camera.add(handLight);
+scene.add(camera);
 
-const ambient = new THREE.AmbientLight(0x4040ff, 0.5);
-scene.add(ambient);
+// --- МИР (ПИКСЕЛЬНЫЙ ВИЗУАЛ) ---
+const textureLoader = new THREE.TextureLoader();
 
-const grid = new THREE.GridHelper(1000, 100, 0x00ffff, 0x111122);
-grid.position.y = 0.05;
-scene.add(grid);
+// Сетка на пол (Кибер-текстура)
+const groundGeo = new THREE.PlaneGeometry(500, 500);
+const groundMat = new THREE.MeshStandardMaterial({ 
+    color: 0x111111, metalness: 0.8, roughness: 0.2, emissive: 0x00ffff, emissiveIntensity: 0.02 
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
 
+// Здания-коробки
 const buildings = [];
-for(let i=0; i<80; i++) {
-    const h = 20 + Math.random()*60;
+for(let i=0; i<100; i++) {
+    const h = 20 + Math.random()*80;
+    const w = 10 + Math.random()*15;
     const b = new THREE.Mesh(
-        new THREE.BoxGeometry(10, h, 10),
-        new THREE.MeshStandardMaterial({ color: 0x050510, emissive: 0x00ffff, emissiveIntensity: 0.1 })
+        new THREE.BoxGeometry(w, h, w),
+        new THREE.MeshStandardMaterial({ color: 0x05050a, emissive: 0x0055ff, emissiveIntensity: 0.1 })
     );
-    b.position.set((Math.random()-0.5)*400, h/2, (Math.random()-0.5)*400);
+    b.position.set((Math.random()-0.5)*300, h/2, (Math.random()-0.5)*300);
     scene.add(b);
     b.userData.box = new THREE.Box3().setFromObject(b);
     buildings.push(b);
 }
 
-// Кот
-const cat = new THREE.Group();
-const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 3), new THREE.MeshStandardMaterial({ color: 0xff8800 }));
-cat.add(body);
-cat.position.y = 0.5;
-scene.add(cat);
+// --- РУКА И ОРУЖИЕ (Вид от первого лица) ---
+const handGroup = new THREE.Group();
+const armMat = new THREE.MeshStandardMaterial({ color: 0x00cccc }); // Рука Стива
+const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), armMat);
+arm.position.set(0.6, -0.6, -0.8);
+arm.rotation.x = -Math.PI / 4;
+handGroup.add(arm);
 
-// --- УПРАВЛЕНИЕ ---
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enablePan = false;
-controls.enableDamping = true;
-camera.position.set(0, 10, 15);
+// Пиксельная кирка (из блоков)
+const pickaxe = new THREE.Group();
+const pickMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8 });
+const stick = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+pickaxe.add(stick);
+const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.15, 0.2), pickMat);
+head.position.y = 0.5;
+pickaxe.add(head);
+pickaxe.position.set(0.6, -0.3, -1.2);
+pickaxe.rotation.set(-Math.PI/4, 0, Math.PI/4);
+handGroup.add(pickaxe);
 
+camera.add(handGroup);
+
+// --- ВРАГИ (АЛЕКС-ЗОМБИ) ---
+const enemies = [];
+const alexMat = new THREE.MeshStandardMaterial({ color: 0xff44ff, emissive: 0xff00ff, emissiveIntensity: 0.2 }); // Алекс
+const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 5 });
+
+function spawnAlex() {
+    const alex = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1, 1.8, 0.5), alexMat);
+    alex.add(body);
+    // Глаза
+    const e1 = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), eyeMat); e1.position.set(0.2, 0.6, 0.3); alex.add(e1);
+    const e2 = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), eyeMat); e2.position.set(-0.2, 0.6, 0.3); alex.add(e2);
+    
+    // Позиция спавна вдали от игрока
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 50 + Math.random() * 50;
+    alex.position.set(Math.cos(angle)*dist, 0.9, Math.sin(angle)*dist);
+    
+    scene.add(alex);
+    alex.userData = { box: new THREE.Box3(), health: 6, attackTimer: 0 };
+    enemies.push(alex);
+}
+// Спавним 10 Алекс
+for(let i=0; i<10; i++) spawnAlex();
+
+// --- УПРАВЛЕНИЕ И ЛОГИКА ---
 const keys = {};
 window.addEventListener('keydown', e => {
     if(e.key === 'Escape') togglePause();
@@ -160,87 +207,129 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-// --- ЛОГИКА МЕНЮ ---
-window.play = () => {
-    state.paused = false;
-    document.getElementById('ui-layer').style.display = 'none';
-    document.getElementById('hud').style.display = 'block';
-    document.getElementById('cross').style.display = 'block';
-};
+// Клик для атаки
+window.addEventListener('mousedown', () => {
+    if(!state.paused) {
+        // Визуальная атака рукой
+        handGroup.rotation.x = 0.5;
+        setTimeout(() => handGroup.rotation.x = 0, 150);
+        // Логика атаки врага (рейкаст)
+    }
+});
+
+window.startGame = () => { controls.lock(); };
+controls.addEventListener('lock', () => { state.paused = false; uiLayer.style.display = 'none'; hud.style.display = 'block'; });
+controls.addEventListener('unlock', () => { state.paused = true; uiLayer.style.display = 'flex'; hud.style.display = 'none'; });
+
+const uiLayer = document.getElementById('ui-layer');
+const hud = document.getElementById('hud');
 
 function togglePause() {
-    state.paused = !state.paused;
-    document.getElementById('ui-layer').style.display = state.paused ? 'flex' : 'none';
+    if(state.paused) controls.lock(); else controls.unlock();
 }
 
-window.openSettings = () => {
-    document.getElementById('main-menu').style.display = 'none';
-    document.getElementById('settings-screen').style.display = 'flex';
-};
+// Принятие урона
+function takeDamage(amount) {
+    state.hp -= amount;
+    // Обновление HUD
+    updateHud();
+    // Эффект красного экрана
+    const flash = document.getElementById('damage-flash');
+    flash.style.background = 'rgba(255,0,0,0.5)';
+    setTimeout(() => flash.style.background = 'rgba(255,0,0,0)', 150);
+    // Тряска камеры
+    camera.rotation.z = (Math.random()-0.5)*0.1;
+    
+    if(state.hp <= 0) {
+        alert("ГЕЙМ ОВЕР! Ты пал от рук Алекс.");
+        window.location.reload();
+    }
+}
 
-window.closeSettings = () => {
-    document.getElementById('settings-screen').style.display = 'none';
-    document.getElementById('main-menu').style.display = 'flex';
-};
+function updateHud() {
+    const hearts = document.querySelectorAll('#hp-bar .heart');
+    hearts.forEach((h, i) => {
+        const hpVal = (i + 1) * 2;
+        if(hpVal <= state.hp) h.className = 'heart'; // Полное
+        else if(hpVal - 1 <= state.hp) h.className = 'heart half'; // Половина (пока нет текстуры)
+        else h.className = 'heart empty'; // Пустое
+    });
+    document.getElementById('stamina-fill').style.width = state.stamina + '%';
+}
 
-window.toggleGfx = () => {
-    state.fancy = !state.fancy;
-    document.getElementById('gfx-val').innerText = state.fancy ? 'Fancy' : 'Fast';
-    bloomPass.enabled = state.fancy;
-};
+// --- ЦИКЛ АНИМАЦИИ ---
+const clock = new THREE.Clock();
+const moveVec = new THREE.Vector3();
 
-// Настройки ползунков
-document.getElementById('fov').oninput = (e) => {
-    camera.fov = e.target.value;
-    camera.updateProjectionMatrix();
-    document.getElementById('fov-val').innerText = e.target.value;
-};
-
-document.getElementById('dist').oninput = (e) => {
-    const val = e.target.value;
-    const labels = ["Short", "Normal", "Far"];
-    document.getElementById('dist-val').innerText = labels[val-1];
-    fog.density = 0.05 / val;
-};
-
-// --- ЦИКЛ ---
 function animate() {
     requestAnimationFrame(animate);
+    const delta = clock.getDelta();
 
     if(!state.paused) {
-        const speed = 0.5;
-        const camDir = new THREE.Vector3();
-        camera.getWorldDirection(camDir);
-        camDir.y = 0; camDir.normalize();
-        const camSide = new THREE.Vector3().crossVectors(camDir, new THREE.Vector3(0,1,0)).normalize();
-
-        const move = new THREE.Vector3(0,0,0);
-        if(keys['w']) move.add(camDir);
-        if(keys['s']) move.sub(camDir);
-        if(keys['a']) move.add(camSide);
-        if(keys['d']) move.sub(camSide);
-
-        if(move.length() > 0) {
-            move.normalize().multiplyScalar(speed);
-            const nextPos = cat.position.clone().add(move);
-            
-            // Коллизии
-            const catBox = new THREE.Box3().setFromCenterAndSize(nextPos, new THREE.Vector3(2.1, 1, 3.1));
-            const collided = buildings.some(b => catBox.intersectsBox(b.userData.box));
-            
-            if(!collided) {
-                cat.position.copy(nextPos);
-                const targetAngle = Math.atan2(move.x, move.z) + Math.PI;
-                cat.rotation.y = THREE.MathUtils.lerp(cat.rotation.y, targetAngle, 0.15);
-            }
-        }
+        const time = clock.getElapsedTime();
         
-        controls.target.lerp(cat.position, 0.1);
+        // 1. Управление (WASD)
+        const curSpeed = keys['shift'] && state.stamina > 10 ? CONFIG.sprintSpeed : CONFIG.speed;
+        if(keys['shift'] && state.stamina > 0) state.stamina -= 30 * delta; 
+        else if(state.stamina < 100) state.stamina += 10 * delta;
+
+        moveVec.set(0,0,0);
+        if(keys['w']) moveVec.z -= 1;
+        if(keys['s']) moveVec.z += 1;
+        if(keys['a']) moveVec.x -= 1;
+        if(keys['d']) moveVec.x += 1;
+        moveVec.normalize();
+
+        // Движение относительно взгляда
+        controls.moveRight(moveVec.x * curSpeed);
+        controls.moveForward(-moveVec.z * curSpeed);
+
+        // Коллизии игрока
+        const pBox = new THREE.Box3().setFromCenterAndSize(camera.position, new THREE.Vector3(1, 2, 1));
+        buildings.forEach(b => {
+            if(pBox.intersectsBox(b.userData.box)) {
+                // Упрощенный отскок
+                controls.moveForward(moveVec.z * curSpeed * 1.5);
+                controls.moveRight(-moveVec.x * curSpeed * 1.5);
+            }
+        });
+
+        // 2. Покачивание рук при ходьбе (ViewBobbing)
+        if(moveVec.length() > 0) {
+            state.bobTime += delta * 8;
+            handGroup.position.y = Math.sin(state.bobTime) * 0.05 - 0.1;
+            handGroup.position.x = Math.cos(state.bobTime * 0.5) * 0.03;
+        } else {
+            handGroup.position.y = THREE.MathUtils.lerp(handGroup.position.y, -0.1, 0.1);
+        }
+
+        // 3. ИИ Врагов (Алекс)
+        enemies.forEach(alex => {
+            alex.userData.attackTimer -= delta;
+            
+            const dist = alex.position.distanceTo(camera.position);
+            
+            // Если близко - преследует
+            if(dist < 30) {
+                const dir = camera.position.clone().sub(alex.position);
+                dir.y = 0; dir.normalize();
+                alex.position.add(dir.multiplyScalar(delta * 4)); // Скорость Алекс
+                alex.lookAt(camera.position.x, alex.position.y, camera.position.z);
+                
+                // Атака
+                if(dist < 2 && alex.userData.attackTimer <= 0) {
+                    takeDamage(CONFIG.enemyDamage);
+                    alex.userData.attackTimer = 1.5; // Кулдаун атаки
+                }
+            }
+            
+            alex.userData.box.setFromObject(alex); // Обновляем хитбокс
+        });
+
+        updateHud();
     }
 
-    controls.update();
-    if(state.fancy) composer.render();
-    else renderer.render(scene, camera);
+    renderer.render(scene, camera);
 }
 
 animate();
@@ -249,7 +338,6 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
 </body>
