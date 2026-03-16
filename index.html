@@ -2,38 +2,112 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>CyberSteve: Battle Update</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER STEVE: NEON RECKONING</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; user-select: none; }
-        #ui-layer { position: absolute; width: 100%; height: 100%; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); }
-        .mc-btn { width: 300px; padding: 15px; margin: 5px; background: #4a4a4a; border: 2px solid #000; color: #fff; cursor: pointer; text-align: center; font-weight: bold; box-shadow: inset -3px -3px 0 #222, inset 3px 3px 0 #888; }
-        .mc-btn:hover { background: #666; border-color: #fff; }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
-        #hud { position: absolute; width: 100%; height: 100%; pointer-events: none; display: none; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 2px solid white; transform: translate(-50%, -50%); mix-blend-mode: difference; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
         
-        #hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; background: rgba(0,0,0,0.6); border: 3px solid #8b8b8b; padding: 2px; }
-        .slot { width: 40px; height: 40px; border: 2px solid #444; margin: 2px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; }
-        .slot.active { border-color: #fff; background: rgba(255,255,255,0.2); }
+        /* ГЛАВНОЕ МЕНЮ (MINECRAFT STYLE) */
+        #menu-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+        }
+
+        .title-container { position: relative; margin-bottom: 100px; }
+        .main-title { font-size: 60px; color: #fff; text-shadow: 8px 8px #3f3f3f; letter-spacing: 10px; text-align: center; }
+        .splash-text { 
+            position: absolute; top: 40px; right: -60px; color: #ffff00; font-size: 18px; 
+            transform: rotate(-20deg); animation: splashBounce 0.5s infinite alternate; 
+        }
+
+        .mc-button {
+            width: 400px; height: 50px; background: #4a4a4a; border: 3px solid #000;
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            margin: 10px; cursor: pointer; position: relative; font-size: 16px;
+            box-shadow: inset -4px -4px 0px #212121, inset 4px 4px 0px #8b8b8b;
+        }
+        .mc-button:hover { background: #6b6b6b; border-color: #fff; color: #ffffa0; }
+        .mc-button:active { box-shadow: inset 4px 4px 0px #212121, inset -4px -4px 0px #8b8b8b; }
+
+        /* ИГРОВОЙ ИНТЕРФЕЙС */
+        #game-hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
         
-        #hp-bar { position: absolute; bottom: 65px; left: 50%; transform: translateX(-150px); color: #ff0044; font-weight: bold; font-size: 20px; text-shadow: 2px 2px #000; }
+        #crosshair { 
+            position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; 
+            transform: translate(-50%, -50%); mix-blend-mode: difference;
+        }
+        #crosshair::before, #crosshair::after {
+            content: ''; position: absolute; background: #fff;
+        }
+        #crosshair::before { top: 11px; left: 0; width: 24px; height: 2px; }
+        #crosshair::after { left: 11px; top: 0; width: 2px; height: 24px; }
+
+        .stats-container {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            display: flex; width: 720px; justify-content: space-between;
+        }
+        .bar-row { display: flex; gap: 4px; }
+        .heart, .food { width: 18px; height: 18px; background-size: contain; image-rendering: pixelated; }
+        .heart { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWf95fAAAAtklEQVQ4T2P8z8AARAwDCDD8Z2S8j6IGYfX/Gf4z/IeIowuDxf8z/AezkdUgZAsY8YpBNYhYAyDq8GoQsQZAlOHVIGINgKjDq0HEGgBRh1eDiDUAog6vBhFrAEQdXg0i1gCIOswaRKEBUPN+NPWvBpFrANQ8mGf/1SByDYCaB7MBrwaRawDUPJhH/mYQuQZAzYPZ9G8GkWsA1DyYmfxmELkGQM2DOfpvBhFrANQ8mAn/ZhC5BvD6798MIAUAtOOnEc89D34AAAAASUVORK5CYII='); }
+        .food { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWf95fAAAA80lEQVQ4T2P8z8AAAr8Z/oPIn/8MGP4zQAn8Z/gP0vD7H0IcZBDMIFIDGP8z/Gf8zxAN0vD7Px6D8BpEsgFAm8C0CS0YpEHg6oAagGQD0NoANQa8BkHzAZLNR6kBCHVADVDWAKQaIDZAWQOQaoDYAKUNQKoBYgOUNgCpBogNUNoApBogNkBpA5BqgNgApQ1AqgFiA5Q2AKkGiA1Q2gCkGiA2QGkDkGqA2AClDUCqAWIDlDYAkS9IDSDVAKEBShuA9HnEGoD0fXg0AOn78GgA0vfh0QCk78OjAUjfh0cDkL4PjwYgfR8eDUD6PjwagPR9eDQA6fvw6AAs7acRP0L01wAAAABJRU5ErkJggg=='); }
+
+        #hotbar {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            height: 50px; background: rgba(0,0,0,0.5); border: 4px solid #8b8b8b;
+            display: flex; padding: 2px; gap: 4px; pointer-events: auto;
+        }
+        .slot {
+            width: 42px; height: 42px; background: rgba(139,139,139,0.5);
+            border: 2px solid #000; display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 20px;
+        }
+        .slot.selected { border-color: #fff; box-shadow: inset 0 0 10px #fff; }
+
+        #damage-vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; box-shadow: inset 0 0 100px rgba(255,0,0,0);
+            transition: box-shadow 0.1s; z-index: 5000;
+        }
+
+        @keyframes splashBounce {
+            from { transform: rotate(-20deg) scale(1); }
+            to { transform: rotate(-20deg) scale(1.15); }
+        }
     </style>
 </head>
 <body>
 
-<div id="ui-layer">
-    <h1 style="color: #fff; text-shadow: 4px 4px #444;">CYBER STEVE: ARENA</h1>
-    <div class="mc-btn" onclick="controls.lock()">START GAME</div>
+<div id="damage-vignette"></div>
+
+<div id="menu-overlay">
+    <div class="title-container">
+        <h1 class="main-title">CYBER<br>STEVE</h1>
+        <div class="splash-text">RTX ON!</div>
+    </div>
+    <div class="mc-button" id="start-btn">Singleplayer</div>
+    <div class="mc-button" onclick="alert('Settings: FOV 90, Particles: ON, Violence: HIGH')">Options...</div>
+    <div class="mc-button" onclick="location.reload()">Quit Game</div>
 </div>
 
-<div id="hud">
+<div id="game-hud">
     <div id="crosshair"></div>
-    <div id="hp-bar">❤ HP: <span id="hp-val">20</span></div>
+    <div class="stats-container">
+        <div class="bar-row" id="hp-container"></div>
+        <div class="bar-row" id="hunger-container"></div>
+    </div>
     <div id="hotbar">
-        <div class="slot active" id="slot0">⚒</div>
-        <div class="slot" id="slot1">⚔</div>
-        <div class="slot" id="slot2">🏹</div>
-        <div class="slot" id="slot3">🍎</div>
+        <div class="slot selected" data-slot="0">⚒</div>
+        <div class="slot" data-slot="1">⚔</div>
+        <div class="slot" data-slot="2">🏹</div>
+        <div class="slot" data-slot="3">🧱</div>
+        <div class="slot" data-slot="4">🍎</div>
+        <div class="slot" data-slot="5"></div>
+        <div class="slot" data-slot="6"></div>
+        <div class="slot" data-slot="7"></div>
+        <div class="slot" data-slot="8"></div>
     </div>
 </div>
 
@@ -50,166 +124,258 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
+// --- ИГРОВЫЕ ПАРАМЕТРЫ ---
+const state = {
+    playing: false,
+    hp: 20,
+    hunger: 20,
+    selectedSlot: 0,
+    lastAttack: 0
+};
+
+// --- СЦЕНА ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020208);
-scene.fog = new THREE.FogExp2(0x020208, 0.02);
+scene.background = new THREE.Color(0x020205);
+scene.fog = new THREE.FogExp2(0x020205, 0.02);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new PointerLockControls(camera, document.body);
-const ui = document.getElementById('ui-layer');
-const hud = document.getElementById('hud');
 
-controls.addEventListener('lock', () => { ui.style.display = 'none'; hud.style.display = 'block'; });
-controls.addEventListener('unlock', () => { ui.style.display = 'flex'; hud.style.display = 'none'; });
+// --- ОСВЕЩЕНИЕ ---
+const ambient = new THREE.AmbientLight(0x4040ff, 0.4);
+scene.add(ambient);
 
-// --- СВЕТ ---
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-const flashLight = new THREE.PointLight(0x00ffff, 1, 20);
-camera.add(flashLight);
+const torch = new THREE.PointLight(0x00ffff, 1.5, 15);
+camera.add(torch);
 scene.add(camera);
 
-// --- ГЕЙМПЛЕЙ СОСТОЯНИЕ ---
-const player = { hp: 20, selectedSlot: 0, items: ['pickaxe', 'sword', 'bow', 'apple'] };
-const enemies = [];
-const keys = {};
+// --- ГЕНЕРАЦИЯ МИРА ---
+// Пол (Сетка)
+const grid = new THREE.GridHelper(1000, 100, 0x00ffff, 0x111122);
+scene.add(grid);
 
-// --- МОДЕЛЬ РУКИ СТИВА ---
-const hand = new THREE.Group();
-const arm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), new THREE.MeshStandardMaterial({ color: 0x00acc1 }));
-arm.position.set(0.5, -0.4, -0.5);
-hand.add(arm);
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(1000, 1000),
+    new THREE.MeshStandardMaterial({ color: 0x050505, metalness: 0.8, roughness: 0.2 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
 
-const toolGroup = new THREE.Group();
-const toolMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.1), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
-toolMesh.position.set(0.5, -0.1, -1.0);
-toolMesh.rotation.x = Math.PI/4;
-toolGroup.add(toolMesh);
-hand.add(toolGroup);
-camera.add(hand);
+// Здания
+const buildings = [];
+for (let i = 0; i < 60; i++) {
+    const h = 10 + Math.random() * 50;
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(10, h, 10),
+        new THREE.MeshStandardMaterial({ color: 0x0a0a1a, emissive: 0x00ffff, emissiveIntensity: 0.05 })
+    );
+    box.position.set((Math.random() - 0.5) * 300, h / 2, (Math.random() - 0.5) * 300);
+    scene.add(box);
+    buildings.push(new THREE.Box3().setFromObject(box));
+}
 
-// --- СОЗДАНИЕ АЛЕКС ---
-function createAlex() {
-    const alex = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: 0xff77ff });
+// --- МОДЕЛИ (СТИВ И АЛЕКС) ---
+function createHumanoid(skinColor, clothColor) {
+    const group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: clothColor });
+    const skinMat = new THREE.MeshStandardMaterial({ color: skinColor });
     
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1, 1.2, 0.5), mat);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+    // Туловище
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.4), bodyMat);
+    group.add(torso);
+    
+    // Голова
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skinMat);
     head.position.y = 0.9;
+    group.add(head);
     
-    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), new THREE.MeshStandardMaterial({ color: 0x3333ff }));
-    lLeg.position.set(0.25, -1, 0);
-    const rLeg = lLeg.clone(); rLeg.position.x = -0.25;
+    // Руки
+    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.1, 0.3), skinMat);
+    armL.position.set(0.6, 0, 0);
+    group.add(armL);
     
-    alex.add(body, head, lLeg, rLeg);
-    alex.position.set((Math.random()-0.5)*100, 1.5, (Math.random()-0.5)*100);
+    const armR = armL.clone();
+    armR.position.x = -0.6;
+    group.add(armR);
     
+    // Ноги
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.1, 0.35), new THREE.MeshStandardMaterial({color: 0x3333ff}));
+    legL.position.set(0.2, -1.1, 0);
+    group.add(legL);
+    
+    const legR = legL.clone();
+    legR.position.x = -0.2;
+    group.add(legR);
+    
+    group.userData = { armL, armR, legL, legR, head };
+    return group;
+}
+
+// Рука Стива (First Person)
+const steveArm = createHumanoid(0xffdbac, 0x00cccc).userData.armR;
+steveArm.position.set(0.7, -0.6, -1);
+steveArm.rotation.x = -Math.PI / 3;
+camera.add(steveArm);
+
+// Создание врагов (Алекс)
+const enemies = [];
+function spawnAlex() {
+    const alex = createHumanoid(0xffe0bd, 0xff77ff);
+    alex.position.set((Math.random() - 0.5) * 100, 2.2, (Math.random() - 0.5) * 100);
     scene.add(alex);
-    alex.userData = { hp: 5, lLeg, rLeg, lastHit: 0 };
+    alex.userData.hp = 10;
+    alex.userData.lastHit = 0;
     enemies.push(alex);
 }
-for(let i=0; i<15; i++) createAlex();
+for (let i = 0; i < 15; i++) spawnAlex();
 
-// --- СИСТЕМА УДАРА ---
+// --- ИНТЕРФЕЙС И УПРАВЛЕНИЕ ---
+const hpCont = document.getElementById('hp-container');
+const hungerCont = document.getElementById('hunger-container');
+const slots = document.querySelectorAll('.slot');
+
+function updateHUD() {
+    hpCont.innerHTML = ''; hungerCont.innerHTML = '';
+    for(let i=0; i<10; i++) {
+        const h = document.createElement('div'); h.className = 'heart' + (i*2 >= state.hp ? ' empty' : '');
+        hpCont.appendChild(h);
+        const f = document.createElement('div'); f.className = 'food' + (i*2 >= state.hunger ? ' empty' : '');
+        hungerCont.appendChild(f);
+    }
+}
+
+document.getElementById('start-btn').onclick = () => {
+    controls.lock();
+};
+
+controls.addEventListener('lock', () => {
+    state.playing = true;
+    document.getElementById('menu-overlay').style.display = 'none';
+    document.getElementById('game-hud').style.display = 'block';
+});
+
+controls.addEventListener('unlock', () => {
+    state.playing = false;
+    document.getElementById('menu-overlay').style.display = 'flex';
+    document.getElementById('game-hud').style.display = 'none';
+});
+
+// Боёвка
 const raycaster = new THREE.Raycaster();
-function attack() {
-    // Анимация руки
-    hand.rotation.x = 0.8;
-    setTimeout(() => hand.rotation.x = 0, 150);
+window.addEventListener('mousedown', (e) => {
+    if (!state.playing || Date.now() - state.lastAttack < 300) return;
+    state.lastAttack = Date.now();
+    
+    // Анимация удара
+    steveArm.position.z -= 0.5;
+    setTimeout(() => steveArm.position.z += 0.5, 100);
 
-    // Рейкаст (куда смотрим)
-    raycaster.setFromCamera({x: 0, y: 0}, camera);
-    const hits = raycaster.intersectObjects(enemies, true);
+    raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    const intersects = raycaster.intersectObjects(enemies, true);
 
-    if(hits.length > 0) {
-        let target = hits[0].object;
-        while(target.parent && !enemies.includes(target)) target = target.parent;
+    if (intersects.length > 0) {
+        let obj = intersects[0].object;
+        while(obj.parent && !enemies.includes(obj)) obj = obj.parent;
         
-        if(enemies.includes(target)) {
-            target.userData.hp -= 2;
-            target.userData.lastHit = Date.now();
-            // Отдача (pushback)
-            const dir = target.position.clone().sub(camera.position).normalize();
-            target.position.addScaledVector(dir, 2);
+        if (enemies.includes(obj)) {
+            obj.userData.hp -= 2;
+            obj.userData.lastHit = Date.now();
+            // Отдача
+            const bounce = new THREE.Vector3().subVectors(obj.position, camera.position).normalize().multiplyScalar(2);
+            obj.position.add(bounce);
             
-            if(target.userData.hp <= 0) {
-                scene.remove(target);
-                enemies.splice(enemies.indexOf(target), 1);
-                createAlex(); // Спавним новую
+            if(obj.userData.hp <= 0) {
+                scene.remove(obj);
+                enemies.splice(enemies.indexOf(obj), 1);
+                spawnAlex();
             }
         }
     }
-}
+});
 
-// --- УПРАВЛЕНИЕ ---
-window.addEventListener('keydown', e => {
-    keys[e.key.toLowerCase()] = true;
-    if(e.key >= '1' && e.key <= '4') {
-        player.selectedSlot = parseInt(e.key) - 1;
-        document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
-        document.getElementById('slot' + player.selectedSlot).classList.add('active');
+// Смена слотов
+window.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '9') {
+        state.selectedSlot = parseInt(e.key) - 1;
+        slots.forEach((s, i) => s.classList.toggle('selected', i === state.selectedSlot));
     }
 });
-window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-window.addEventListener('mousedown', () => { if(controls.isLocked) attack(); });
 
 // --- ГЛАВНЫЙ ЦИКЛ ---
+const keys = {};
+window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+
 const clock = new THREE.Clock();
-function update() {
-    requestAnimationFrame(update);
+
+function animate() {
+    requestAnimationFrame(animate);
     const delta = clock.getDelta();
     const time = clock.getElapsedTime();
 
-    if(controls.isLocked) {
+    if (state.playing) {
         // Движение
-        const speed = 0.2;
-        if(keys['w']) controls.moveForward(speed);
-        if(keys['s']) controls.moveForward(-speed);
-        if(keys['a']) controls.moveRight(-speed);
-        if(keys['d']) controls.moveRight(speed);
+        const speed = keys['shift'] ? 0.3 : 0.15;
+        if (keys['w']) controls.moveForward(speed);
+        if (keys['s']) controls.moveForward(-speed);
+        if (keys['a']) controls.moveRight(-speed);
+        if (keys['d']) controls.moveRight(speed);
 
-        // ИИ Алекс
+        // Коллизии (лениво)
+        if (camera.position.y !== 1.8) camera.position.y = 1.8;
+
+        // Враги
         enemies.forEach(alex => {
             const dist = alex.position.distanceTo(camera.position);
             
-            // Визуальный эффект получения урона (краснеет)
-            const isHit = (Date.now() - alex.userData.lastHit < 200);
-            alex.traverse(child => {
-                if(child.isMesh) child.material.color.set(isHit ? 0xff0000 : (child.geometry.type === 'BoxGeometry' ? 0xff77ff : 0xffffff));
+            // Визуальный отклик урона
+            const hitFactor = Math.max(0, 1.0 - (Date.now() - alex.userData.lastHit) / 300);
+            alex.traverse(m => {
+                if(m.isMesh) m.material.emissive.setRGB(hitFactor, 0, 0);
             });
 
-            if(dist < 20) {
-                const dir = camera.position.clone().sub(alex.position).normalize();
-                alex.position.x += dir.x * 0.05;
-                alex.position.z += dir.z * 0.05;
+            if (dist < 20) {
+                const dir = new THREE.Vector3().subVectors(camera.position, alex.position);
+                dir.y = 0; dir.normalize();
+                alex.position.add(dir.multiplyScalar(0.06));
                 alex.lookAt(camera.position.x, alex.position.y, camera.position.z);
                 
-                // Анимация ходьбы ног
-                alex.userData.lLeg.rotation.x = Math.sin(time * 10) * 0.5;
-                alex.userData.rLeg.rotation.x = -Math.sin(time * 10) * 0.5;
+                // Анимация ходьбы
+                alex.userData.legL.rotation.x = Math.sin(time * 8) * 0.5;
+                alex.userData.legR.rotation.x = -Math.sin(time * 8) * 0.5;
+                alex.userData.armL.rotation.x = -Math.sin(time * 8) * 0.5;
+                alex.userData.armR.rotation.x = Math.sin(time * 8) * 0.5;
 
                 // Урон игроку
-                if(dist < 1.5 && Math.random() < 0.02) {
-                    player.hp -= 1;
-                    document.getElementById('hp-val').innerText = player.hp;
-                    if(player.hp <= 0) location.reload();
+                if (dist < 1.5 && Math.random() < 0.05) {
+                    state.hp -= 1;
+                    document.getElementById('damage-vignette').style.boxShadow = 'inset 0 0 100px rgba(255,0,0,1)';
+                    setTimeout(() => document.getElementById('damage-vignette').style.boxShadow = 'inset 0 0 100px rgba(255,0,0,0)', 100);
+                    if(state.hp <= 0) location.reload();
                 }
             }
         });
+
+        updateHUD();
     }
 
     renderer.render(scene, camera);
 }
 
-// Пол и Здания
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
+updateHUD();
+animate();
 
-update();
+// Ресайз
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
 </body>
 </html>
