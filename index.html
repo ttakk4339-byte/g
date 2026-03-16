@@ -2,261 +2,152 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>CyberCat City</title>
-
+<title>CyberCat City Fixed</title>
 <style>
-body{
-margin:0;
-overflow:hidden;
-background:black;
-font-family:Arial;
-}
-
-#ui{
-position:absolute;
-top:10px;
-left:10px;
-color:white;
-font-size:18px;
-z-index:10;
-}
-
-#inventory{
-position:absolute;
-top:60px;
-left:10px;
-color:white;
-}
-
-#quest{
-position:absolute;
-top:110px;
-left:10px;
-color:#00ffff;
-}
+body{margin:0;overflow:hidden;background:#000;font-family:Arial;}
+#ui{position:absolute;top:10px;left:10px;color:white;z-index:10;font-size:18px;}
+#inventory{position:absolute;top:60px;left:10px;color:white;}
+#quest{position:absolute;top:110px;left:10px;color:#0ff;}
 </style>
 </head>
-
 <body>
-
 <div id="ui">🐟 Рыба: <span id="fish">0</span></div>
-
-<div id="inventory">
-🎒 Инвентарь
-<div id="items"></div>
-</div>
-
-<div id="quest">
-📜 Квест: собрать 5 рыб
-</div>
+<div id="inventory">🎒 Инвентарь<div id="items"></div></div>
+<div id="quest">📜 Квест: собрать 5 рыб</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
 <script>
+let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
 
-let scene = new THREE.Scene()
-scene.background = new THREE.Color(0x000000)
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0,10,20);
 
-let camera = new THREE.PerspectiveCamera(
-75,
-window.innerWidth/window.innerHeight,
-0.1,
-1000
-)
+let renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-let renderer = new THREE.WebGLRenderer({antialias:true})
-renderer.setSize(window.innerWidth,window.innerHeight)
-document.body.appendChild(renderer.domElement)
+let controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
+controls.maxDistance = 50;
+controls.minDistance = 5;
+controls.maxPolarAngle = Math.PI/2;
 
-camera.position.set(0,10,15)
+let ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
 
-let controls = new THREE.OrbitControls(camera,renderer.domElement)
-controls.enablePan=false
-controls.maxDistance=30
-controls.minDistance=8
-controls.maxPolarAngle=Math.PI/2
+let light = new THREE.PointLight(0x00ffff, 1.5, 500);
+light.position.set(0,50,0);
+scene.add(light);
 
-let light = new THREE.PointLight(0x00ffff,2,200)
-light.position.set(0,40,0)
-scene.add(light)
+// Ground
+let ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(500,500),
+    new THREE.MeshStandardMaterial({color:0x222222})
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
 
-let ambient = new THREE.AmbientLight(0xffffff,0.7)
-scene.add(ambient)
+// Cat
+let cat = new THREE.Mesh(
+    new THREE.BoxGeometry(2,1,4),
+    new THREE.MeshStandardMaterial({color:0xff9933})
+);
+cat.position.y = 0.5;
+scene.add(cat);
 
-let groundGeo = new THREE.PlaneGeometry(2000,2000)
-let groundMat = new THREE.MeshStandardMaterial({color:0x080820})
-
-let ground = new THREE.Mesh(groundGeo,groundMat)
-ground.rotation.x=-Math.PI/2
-scene.add(ground)
-
-let catGeo = new THREE.BoxGeometry(2,1,4)
-let catMat = new THREE.MeshStandardMaterial({color:0xff9933})
-
-let cat = new THREE.Mesh(catGeo,catMat)
-cat.position.y=1
-scene.add(cat)
-
-let buildings=[]
-
-for(let i=0;i<150;i++){
-
-let geo=new THREE.BoxGeometry(
-5+Math.random()*20,
-20+Math.random()*100,
-5+Math.random()*20
-)
-
-let mat=new THREE.MeshStandardMaterial({
-color:0x111133,
-emissive:0x001122
-})
-
-let b=new THREE.Mesh(geo,mat)
-
-b.position.x=Math.random()*800-400
-b.position.z=Math.random()*800-400
-b.position.y=geo.parameters.height/2
-
-scene.add(b)
-
-b.box=new THREE.Box3().setFromObject(b)
-
-buildings.push(b)
-
+// Buildings
+let buildings = [];
+for(let i=0;i<50;i++){
+    let geo = new THREE.BoxGeometry(5+Math.random()*15, 20+Math.random()*50, 5+Math.random()*15);
+    let mat = new THREE.MeshStandardMaterial({color: 0x4444ff, emissive:0x001122});
+    let b = new THREE.Mesh(geo, mat);
+    b.position.x = Math.random()*200-100;
+    b.position.z = Math.random()*200-100;
+    b.position.y = geo.parameters.height/2;
+    scene.add(b);
+    b.box = new THREE.Box3().setFromObject(b);
+    buildings.push(b);
 }
 
-let keys={}
-
-document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true
-})
-
-document.addEventListener("keyup",e=>{
-keys[e.key.toLowerCase()]=false
-})
-
-let inventory={fish:0}
-let quest={target:5,done:false}
-
+// Fish
+let inventory = {fish:0};
+let quest = {target:5, done:false};
 function updateUI(){
-
-document.getElementById("fish").innerText=inventory.fish
-document.getElementById("items").innerHTML="🐟 Рыба x"+inventory.fish
-
-if(inventory.fish>=quest.target && !quest.done){
-
-quest.done=true
-document.getElementById("quest").innerText="✅ Квест выполнен!"
-
+    document.getElementById("fish").innerText = inventory.fish;
+    document.getElementById("items").innerHTML = "🐟 Рыба x" + inventory.fish;
+    if(inventory.fish >= quest.target && !quest.done){
+        quest.done = true;
+        document.getElementById("quest").innerText = "✅ Квест выполнен!";
+    }
 }
-
-}
-
-let fishItems=[]
-
+let fishItems = [];
 function spawnFish(){
-
-let geo=new THREE.SphereGeometry(1,12,12)
-
-let mat=new THREE.MeshStandardMaterial({
-color:0x00ffff,
-emissive:0x00ffff
-})
-
-let f=new THREE.Mesh(geo,mat)
-
-f.position.x=Math.random()*200-100
-f.position.z=Math.random()*200-100
-f.position.y=1
-
-scene.add(f)
-
-fishItems.push(f)
-
+    let geo = new THREE.SphereGeometry(1,12,12);
+    let mat = new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff});
+    let f = new THREE.Mesh(geo, mat);
+    f.position.x = Math.random()*100-50;
+    f.position.z = Math.random()*100-50;
+    f.position.y = 0.5;
+    scene.add(f);
+    fishItems.push(f);
 }
+for(let i=0;i<10;i++) spawnFish();
 
-for(let i=0;i<15;i++) spawnFish()
+// Controls
+let keys = {};
+document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
 
-let speed=0.35
-
+let speed = 0.2;
 function checkCollision(x,z){
-
-let playerBox=new THREE.Box3(
-new THREE.Vector3(x-1,0,z-1),
-new THREE.Vector3(x+1,2,z+1)
-)
-
-for(let b of buildings){
-
-if(playerBox.intersectsBox(b.box)) return true
-
-}
-
-return false
-
+    let box = new THREE.Box3(new THREE.Vector3(x-1,0,z-1), new THREE.Vector3(x+1,2,z+1));
+    for(let b of buildings){ if(box.intersectsBox(b.box)) return true; }
+    return false;
 }
 
 function updateCat(){
-
-let newX=cat.position.x
-let newZ=cat.position.z
-
-if(keys["w"]) newZ-=speed
-if(keys["s"]) newZ+=speed
-if(keys["a"]) newX-=speed
-if(keys["d"]) newX+=speed
-
-if(!checkCollision(newX,newZ)){
-
-cat.position.x=newX
-cat.position.z=newZ
-
-}
-
+    let newX=cat.position.x, newZ=cat.position.z;
+    if(keys['w']) newZ -= speed;
+    if(keys['s']) newZ += speed;
+    if(keys['a']) newX -= speed;
+    if(keys['d']) newX += speed;
+    if(!checkCollision(newX,newZ)){ cat.position.x = newX; cat.position.z = newZ; }
 }
 
 function updateFish(){
-
-fishItems.forEach(f=>{
-
-let dx=f.position.x-cat.position.x
-let dz=f.position.z-cat.position.z
-
-let dist=Math.sqrt(dx*dx+dz*dz)
-
-if(dist<3){
-
-inventory.fish++
-updateUI()
-
-f.position.x=Math.random()*200-100
-f.position.z=Math.random()*200-100
-
-}
-
-})
-
+    fishItems.forEach(f=>{
+        let dx = f.position.x - cat.position.x;
+        let dz = f.position.z - cat.position.z;
+        let dist = Math.sqrt(dx*dx + dz*dz);
+        if(dist<2){
+            inventory.fish++;
+            updateUI();
+            f.position.x = Math.random()*100-50;
+            f.position.z = Math.random()*100-50;
+        }
+    });
 }
 
 function animate(){
-
-requestAnimationFrame(animate)
-
-updateCat()
-updateFish()
-
-controls.target.copy(cat.position)
-controls.update()
-
-renderer.render(scene,camera)
-
+    requestAnimationFrame(animate);
+    updateCat();
+    updateFish();
+    controls.target.copy(cat.position);
+    controls.update();
+    renderer.render(scene,camera);
 }
 
-updateUI()
-animate()
+updateUI();
+animate();
 
+window.addEventListener("resize", ()=>{
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
 
 </body>
